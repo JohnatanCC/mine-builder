@@ -11,7 +11,7 @@ import { Ground } from "./components/Ground";
 import { Highlight } from "./components/Highlight";
 import { WireframeAll } from "./components/WireframeAll";
 import { Lights } from "./components/Lights";
-import FpsMeter from "./components/FpsMeter";
+import FpsMeter from "./ui/FpsMeter";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { VersionBadge } from "./ui/VersionBadge";
 import { Hotbar } from "./ui/Hotbar";

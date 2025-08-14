@@ -8,4 +8,5 @@ body {
   background: linear-gradient(180deg, #d4f5ffff 0%, #253242ff 100%);
   color: #fff;
   font-family: sans-serif;
+  overflow: hidden;
 }

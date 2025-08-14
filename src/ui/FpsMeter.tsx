@@ -32,7 +32,7 @@ export default function FpsMeter() {
       style={{
         position: "absolute",
         top: 10,
-        left: 10,
+        right: 10,
         padding: "4px 8px",
         background: "rgba(0,0,0,0.5)",
         color: "#0f0",
