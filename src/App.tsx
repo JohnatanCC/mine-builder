@@ -22,6 +22,7 @@ import { GhostPreview } from "./ui/GhostPreview";
 import { ControlsGuide } from "./ui/ControlsGuide";
 import { HUDStatus } from "./ui/HUDStatus";
 import { FogController } from "./components/FogController";
+import { EffectsLayer } from "./components/EffectsLayer";
 
 export default function App() {
   const setCurrent = useWorld((s) => s.setCurrent);
@@ -137,6 +138,7 @@ export default function App() {
         />
 
         <World />
+        <EffectsLayer />
         <GhostPreview />
         <Highlight />
         <WireframeAll />

@@ -35,6 +35,13 @@ export function SettingsPanel() {
   const fogDensity = useWorld(s => s.fogDensity);
   const setFogDensity = useWorld(s => s.setFogDensity);
 
+  const blockAnimEnabled = useWorld(s => s.blockAnimEnabled);
+  const setBlockAnimEnabled = useWorld(s => s.setBlockAnimEnabled);
+  const blockAnimDuration = useWorld(s => s.blockAnimDuration);
+  const setBlockAnimDuration = useWorld(s => s.setBlockAnimDuration);
+  const blockAnimBounce = useWorld(s => s.blockAnimBounce);
+  const setBlockAnimBounce = useWorld(s => s.setBlockAnimBounce);
+
   return (
     <div
       style={{
@@ -203,6 +210,38 @@ export function SettingsPanel() {
           disabled={!fogEnabled}
         />
       </Section>
+
+      <Section title="Animação de blocos">
+        <label style={{ color: '#ddd', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={blockAnimEnabled}
+            onChange={(e) => setBlockAnimEnabled(e.target.checked)}
+          />
+          Ativar animação
+        </label>
+
+        <div style={{ color: '#ddd', fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
+          <span>Duração</span>
+          <span style={{ fontFamily: 'monospace' }}>{blockAnimDuration | 0} ms</span>
+        </div>
+        <input
+          type="range" min={80} max={600} step={10}
+          value={blockAnimDuration}
+          onChange={(e) => setBlockAnimDuration(parseInt(e.target.value, 10))}
+        />
+
+        <div style={{ color: '#ddd', fontSize: 12, display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <span>Intensidade do bounce</span>
+          <span style={{ fontFamily: 'monospace' }}>{blockAnimBounce.toFixed(2)}</span>
+        </div>
+        <input
+          type="range" min={0} max={1} step={0.01}
+          value={blockAnimBounce}
+          onChange={(e) => setBlockAnimBounce(parseFloat(e.target.value))}
+        />
+      </Section>
+
 
     </div>
   );

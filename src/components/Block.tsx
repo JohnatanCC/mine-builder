@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as React from 'react';
-import type { ThreeEvent } from '@react-three/fiber';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { getBlockTextures } from '../textures';
 import { getMaterialFor } from '../core/materials';
 import { useWindyLeafMaterial } from '../core/leafMaterial';
@@ -8,6 +8,7 @@ import { key } from '../core/keys';
 import type { BlockType, Pos } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
+import { easeOutBack } from '../utils/blockanim';
 
 const isLeaves = (t: BlockType) =>
   t === 'oak_leaves' || t === 'spruce_leaves' || t === 'birch_leaves';
@@ -26,6 +27,12 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const beginStroke = useWorld((s) => s.beginStroke);
   const endStroke   = useWorld((s) => s.endStroke);
+
+  // animações v0.1.1
+  const blockAnimEnabled   = useWorld((s) => s.blockAnimEnabled);
+  const blockAnimDuration  = useWorld((s) => s.blockAnimDuration);
+  const blockAnimBounce    = useWorld((s) => s.blockAnimBounce);
+  const addRemoveEffect    = useWorld((s) => s.addRemoveEffect);
 
   const idKey = React.useMemo(() => key(...pos), [pos]);
 
@@ -55,6 +62,10 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const tryDeleteHere = () => {
     if (strokeLastKey.current === idKey) return;
+    // efeito transitório de remoção (ghost) — v0.1.1
+    if (useWorld.getState().blockAnimEnabled) {
+      addRemoveEffect(pos, type, useWorld.getState().blockAnimDuration);
+    }
     removeBlock(pos);
     strokeLastKey.current = idKey;
   };
@@ -94,7 +105,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       return;
     }
 
-    // Sem Ctrl: não faz nada agora; a ação acontecerá no PointerUp se for "clique"
+    // Sem Ctrl: a ação acontecerá no PointerUp se for "clique" válido
   };
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
@@ -153,6 +164,27 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
     resetStroke();
   };
 
+  // ====== ANIMAÇÃO DE ENTRADA (v0.1.1) ======
+  const grpRef = React.useRef<THREE.Group>(null!);
+  const t0Ref = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (!blockAnimEnabled) return;
+    t0Ref.current = performance.now();
+    if (grpRef.current) grpRef.current.scale.setScalar(0.01);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useFrame(() => {
+    if (!blockAnimEnabled) return;
+    if (t0Ref.current === null) return;
+    const now = performance.now();
+    const t = Math.min(1, (now - t0Ref.current) / blockAnimDuration);
+    const k = easeOutBack(t, blockAnimBounce);
+    const s = 0.01 + 0.99 * k;
+    if (grpRef.current) grpRef.current.scale.setScalar(s);
+  });
+
   // ====== Folhas (cubo + planos com vento) ======
   if (isLeaves(type)) {
     const t = getBlockTextures();
@@ -191,6 +223,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
     return (
       <group
+        ref={grpRef}
         position={pos}
         onPointerOver={() => setHoveredKey(idKey)}
         onPointerOut={handlePointerOut}
@@ -217,20 +250,21 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   const material = React.useMemo(() => getMaterialFor(type), [type]);
 
   return (
-    <mesh
+    <group
+      ref={grpRef}
       position={pos}
       onPointerOver={() => setHoveredKey(idKey)}
       onPointerOut={handlePointerOut}
       onPointerMove={handlePointerMove}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      castShadow
-      receiveShadow
     >
-      <boxGeometry args={[1, 1, 1]} />
-      {Array.isArray(material)
-        ? material.map((m, i) => <primitive key={i} object={m} attach={`material-${i}`} />)
-        : <primitive object={material} attach="material" />}
-    </mesh>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[1, 1, 1]} />
+        {Array.isArray(material)
+          ? material.map((m, i) => <primitive key={i} object={m} attach={`material-${i}`} />)
+          : <primitive object={material} attach="material" />}
+      </mesh>
+    </group>
   );
 }
