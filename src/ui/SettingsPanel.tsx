@@ -1,10 +1,6 @@
 // src/ui/SettingsPanel.tsx
 import * as React from "react";
 import { useWorld } from "../state/world.store";
-import { Section } from "./Section";
-
-/** ========= Estilos "Minecraft-like" (inline, sem libs) ========= */
-const px = (n: number) => `${n}px`;
 
 const colors = {
   bg: "#111",          // fundo geral
