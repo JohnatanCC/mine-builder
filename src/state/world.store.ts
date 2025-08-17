@@ -122,6 +122,10 @@ export type WorldState = {
   effects: { id: number; pos: Pos; type: BlockType; t0: number; duration: number }[];
   addRemoveEffect: (pos: Pos, type: BlockType, duration?: number) => void;
   gcEffects: () => void;
+
+  // Build size
+  buildSize: number;
+  setBuildSize: (n: number) => void;
 };
 
 /* ========= helpers ========= */
@@ -376,5 +380,13 @@ export const useWorld = create<WorldState>((set, get) => ({
       };
     }),
 
+
+    buildSize: 16,
+setBuildSize: (n: number) => {
+  const cur = get().buildSize;
+  const next = Math.max(16, Math.min(24, Math.round(n)));
+  if (next <= cur) return; // não permite diminuir, nem repetir
+  set({ buildSize: next });
+},
 
 }));
