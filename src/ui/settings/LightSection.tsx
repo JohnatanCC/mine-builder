@@ -1,5 +1,4 @@
 // src/ui/settings/LightSection.tsx
-import * as React from "react";
 import { useWorld } from "../../state/world.store";
 import { groupStyle, titleStyle } from "./theme";
 import { Row, Toggle, Slider } from "./ui";

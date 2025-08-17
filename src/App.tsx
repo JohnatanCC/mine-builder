@@ -2,10 +2,7 @@
 import * as React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-
 import { useWorld } from "./state/world.store";
-import { GROUND_SIZE } from "./core/constants";
-
 import { World } from "./components/World";
 import { Ground } from "./components/Ground";
 import { Highlight } from "./components/Highlight";
