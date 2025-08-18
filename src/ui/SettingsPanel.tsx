@@ -6,7 +6,7 @@ import { FoliageSection } from "./settings/FoliageSection";
 import { WindSection } from "./settings/WindSection";
 import { FogSection } from "./settings/FogSection";
 import { BlockAnimSection } from "./settings/BlockAnimSection";
-import { TerrainSection } from "./settings/TerrainSection";
+import { AudioSection } from "./settings/AudioSection";
 
 export function SettingsPanel() {
   return (
@@ -14,12 +14,12 @@ export function SettingsPanel() {
       <div style={headerStyle}>Configurações</div>
       <div style={bodyStyle}>
         <VisualSection />
+        <AudioSection />
         <LightSection />
         <FoliageSection />
         <WindSection />
         <FogSection />
         <BlockAnimSection />
-        <TerrainSection />
       </div>
     </div>
   );

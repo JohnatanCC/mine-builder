@@ -1,102 +1,57 @@
-import type { BlockData, BlockType } from "../../core/types";
+import type { StateCreator } from "zustand";
+import type { WorldState } from "../world.store";
+import type { HistoryOp } from "../utils/types";
+import { pushPastLimited, removeRaw, setRaw } from "../utils/store-helpers";
 
-type HistoryOp =
-  | { kind: "place"; key: string; type: BlockType }
-  | { kind: "remove"; key: string; prev: BlockData };
-
-export type HistoryItem = HistoryOp | { kind: "stroke"; ops: HistoryOp[] };
-
-export type HistorySlice = {
-  past: HistoryItem[];
-  future: HistoryItem[];
-  currentStroke: HistoryOp[] | null;
-
-  beginStroke: () => void;
-  endStroke: () => void;
-  undo: () => void;
-  redo: () => void;
-};
-
-export const createHistorySlice = (set: any, get: any): HistorySlice => ({
+export const createHistorySlice: StateCreator<WorldState, [], [], Partial<WorldState>> = (set, get) => ({
   past: [],
   future: [],
   currentStroke: null,
 
-  beginStroke: () => {
-    if (!get().currentStroke) set({ currentStroke: [] });
-  },
+  beginStroke: () => set({ currentStroke: [] }),
 
-  endStroke: () => {
-    const st = get();
-    const stroke = st.currentStroke;
-    if (!stroke || stroke.length === 0) {
-      set({ currentStroke: null });
-      return;
-    }
-    set({
-      past: st.past.concat({ kind: "stroke", ops: stroke }),
+  endStroke: () => set((state) => {
+    const ops = state.currentStroke;
+    if (!ops || ops.length === 0) return { currentStroke: null };
+    return {
+      past: pushPastLimited(state.past, { kind: "stroke", ops }),
       future: [],
       currentStroke: null,
-    });
-  },
+    };
+  }),
 
-  undo: () => {
-    const st = get();
-    if (st.past.length === 0) return;
+  undo: () => set((state) => {
+    const item = state.past[state.past.length - 1];
+    if (!item) return {};
+    let blocks = state.blocks;
 
-    const last = st.past[st.past.length - 1] as HistoryItem;
-    const rest = st.past.slice(0, -1);
+    const undoOp = (op: HistoryOp) => {
+      if (op.kind === "place") blocks = removeRaw({ blocks }, op.key);
+      else blocks = setRaw({ blocks }, op.key, op.prev.type);
+    };
 
-    if ((last as any).kind === "stroke") {
-      // desfaz em ordem reversa
-      const ops = (last as any).ops.slice().reverse() as HistoryOp[];
-      set((state: any) => {
-        let blocks = new Map(state.blocks);
-        for (const op of ops) {
-          if (op.kind === "place") {
-            blocks.delete(op.key);
-          } else {
-            blocks.set(op.key, op.prev);
-          }
-        }
-        return { blocks, past: rest, future: st.future.concat(last) };
-      });
-    } else {
-      const op = last as HistoryOp;
-      set((state: any) => {
-        let blocks = new Map(state.blocks);
-        if (op.kind === "place") blocks.delete(op.key);
-        else blocks.set(op.key, op.prev);
-        return { blocks, past: rest, future: st.future.concat(last) };
-      });
-    }
-  },
+    if ("ops" in item) for (let i = item.ops.length - 1; i >= 0; i--) undoOp(item.ops[i]);
+    else undoOp(item);
 
-  redo: () => {
-    const st = get();
-    if (st.future.length === 0) return;
+    return { blocks, past: state.past.slice(0, -1), future: state.future.concat(item) };
+  }),
 
-    const next = st.future[st.future.length - 1] as HistoryItem;
-    const rest = st.future.slice(0, -1);
+  redo: () => set((state) => {
+    const item = state.future[state.future.length - 1];
+    if (!item) return {};
+    let blocks = state.blocks;
 
-    if ((next as any).kind === "stroke") {
-      const ops = (next as any).ops as HistoryOp[];
-      set((state: any) => {
-        let blocks = new Map(state.blocks);
-        for (const op of ops) {
-          if (op.kind === "place") blocks.set(op.key, { type: op.type });
-          else blocks.delete(op.key);
-        }
-        return { blocks, past: st.past.concat(next), future: rest };
-      });
-    } else {
-      const op = next as HistoryOp;
-      set((state: any) => {
-        let blocks = new Map(state.blocks);
-        if (op.kind === "place") blocks.set(op.key, { type: op.type });
-        else blocks.delete(op.key);
-        return { blocks, past: st.past.concat(next), future: rest };
-      });
-    }
-  },
+    const redoOp = (op: HistoryOp) => {
+      if (op.kind === "place") blocks = setRaw({ blocks }, op.key, op.type);
+      else blocks = removeRaw({ blocks }, op.key);
+    };
+
+    if ("ops" in item) for (const op of item.ops) redoOp(op);
+    else redoOp(item);
+
+    return { blocks, future: state.future.slice(0, -1), past: pushPastLimited(state.past, item) };
+  }),
+
+  canUndo: () => get().past.length > 0,
+  canRedo: () => get().future.length > 0,
 });

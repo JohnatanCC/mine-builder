@@ -8,7 +8,7 @@ import { key } from '../core/keys';
 import type { BlockType, Pos } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
-import { easeOutBack } from '../utils/blockanim';
+import { easeOutBack } from '../state/utils/blockanim';
 
 const isLeaves = (t: BlockType) =>
   t === 'oak_leaves' || t === 'spruce_leaves' || t === 'birch_leaves';
