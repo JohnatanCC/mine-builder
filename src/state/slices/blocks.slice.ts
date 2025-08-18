@@ -1,74 +1,45 @@
+import type { StateCreator } from "zustand";
+import type { WorldState } from "../world.store";
 import { key } from "../../core/keys";
-import type { BlockData, BlockType, Pos } from "../../core/types";
+import { pushPastLimited, setRaw, removeRaw } from "../utils/store-helpers";
 
-export type BlocksSlice = {
-  blocks: Map<string, BlockData>;
-  hasBlock: (pos: Pos) => boolean;
-  setBlockSilent: (pos: Pos, type: BlockType) => void;
-  removeBlockSilent: (pos: Pos) => void;
-
-  setBlock: (pos: Pos, type: BlockType) => void;
-  removeBlock: (pos: Pos) => void;
-};
-
-export const createBlocksSlice = (set: any, get: any): BlocksSlice => ({
+export const createBlocksSlice: StateCreator<WorldState, [], [], Partial<WorldState>> = (set, get) => ({
   blocks: new Map(),
+
+  setBlock: (pos, type) => set((state) => {
+    const k = key(...pos);
+    if (state.blocks.has(k)) return {};
+    const blocks = setRaw(state, k, type);
+
+    if (state.currentStroke) {
+      return { blocks, currentStroke: state.currentStroke.concat({ kind: "place", key: k, type }) };
+    }
+    return { blocks, past: pushPastLimited(state.past, { kind: "place", key: k, type }), future: [] };
+  }),
+
+  removeBlock: (pos) => set((state) => {
+    const k = key(...pos);
+    const prev = state.blocks.get(k);
+    if (!prev) return {};
+    const blocks = removeRaw(state, k);
+
+    if (state.currentStroke) {
+      return { blocks, currentStroke: state.currentStroke.concat({ kind: "remove", key: k, prev }) };
+    }
+    return { blocks, past: pushPastLimited(state.past, { kind: "remove", key: k, prev }), future: [] };
+  }),
 
   hasBlock: (pos) => get().blocks.has(key(...pos)),
 
-  setBlockSilent: (pos, type) =>
-    set((state: any) => {
-      const k = key(...pos);
-      if (state.blocks.has(k)) return {};
-      const next = new Map(state.blocks);
-      next.set(k, { type });
-      return { blocks: next };
-    }),
+  setBlockSilent: (pos, type) => set((state) => {
+    const k = key(...pos);
+    if (state.blocks.has(k)) return {};
+    return { blocks: setRaw(state, k, type) };
+  }),
 
-  removeBlockSilent: (pos) =>
-    set((state: any) => {
-      const k = key(...pos);
-      if (!state.blocks.has(k)) return {};
-      const next = new Map(state.blocks);
-      next.delete(k);
-      return { blocks: next };
-    }),
-
-  setBlock: (pos, type) =>
-    set((state: any) => {
-      const k = key(...pos);
-      if (state.blocks.has(k)) return {};
-      const next = new Map(state.blocks);
-      next.set(k, { type });
-
-      // histórico (item simples; strokes são geridos em history.slice)
-      const op = { kind: "place", key: k, type } as const;
-      const past = state.currentStroke
-        ? state.past // dentro de stroke agrupará no endStroke
-        : state.past.concat(op);
-
-      return {
-        blocks: next,
-        past,
-        future: state.currentStroke ? state.future : [],
-      };
-    }),
-
-  removeBlock: (pos) =>
-    set((state: any) => {
-      const k = key(...pos);
-      const prev = state.blocks.get(k);
-      if (!prev) return {};
-      const next = new Map(state.blocks);
-      next.delete(k);
-
-      const op = { kind: "remove", key: k, prev } as const;
-      const past = state.currentStroke ? state.past : state.past.concat(op);
-
-      return {
-        blocks: next,
-        past,
-        future: state.currentStroke ? state.future : [],
-      };
-    }),
+  removeBlockSilent: (pos) => set((state) => {
+    const k = key(...pos);
+    if (!state.blocks.has(k)) return {};
+    return { blocks: removeRaw(state, k) };
+  }),
 });

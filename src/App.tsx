@@ -20,12 +20,14 @@ import { ControlsGuide } from "./ui/ControlsGuide";
 import { HUDStatus } from "./ui/HUDStatus";
 import { FogController } from "./components/FogController";
 import { EffectsLayer } from "./components/EffectsLayer";
+import { AmbientAudio } from "./components/AmbientAudio";
+import { GROUND_SIZE } from "./core/types";
 
 export default function App() {
   const setCurrent = useWorld((s) => s.setCurrent);
   const isCtrlDown = useWorld((s) => s.isCtrlDown);
   const setCtrlDown = useWorld((s) => s.setCtrlDown);
-  const buildSize = useWorld((s) => s.buildSize);
+
 
   const handleCanvasPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     useWorld.getState().setMouse(e.clientX, e.clientY);
@@ -131,13 +133,14 @@ export default function App() {
         />
 
         <gridHelper
-          args={[buildSize, buildSize, "#ffffff", "#303030"]}
-          position={[-0.5, 0.5, -0.5]}
+          args={[GROUND_SIZE, GROUND_SIZE, "#ffffff", "#303030"]}
+          position={[GROUND_SIZE / 2 - 0.5, 0.5, GROUND_SIZE / 2 - 0.5]}
         />
 
         <World />
         <EffectsLayer />
         <GhostPreview />
+        <AmbientAudio />
         <Highlight />
         <WireframeAll />
         <Ground />

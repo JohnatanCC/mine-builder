@@ -11,7 +11,7 @@ export type Pos = [number, number, number];
 export type BlockData = { type: BlockType };
 
 // core/constants.ts
-export const GROUND_SIZE = 16;
+export const GROUND_SIZE = 24;
 export const ACTION_COOLDOWN = 120;
 export const DRAG_THRESHOLD = 4;
 
