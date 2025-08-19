@@ -1,0 +1,40 @@
+📂 core/keys.ts
+- Define atalhos/teclas em constantes.
+- Uso provável: padronizar hotkeys em vez de strings soltas no App.tsx.
+- Ponto de atenção: se o App ainda usa strings diretamente ("1".."0", "H", etc.), há risco de duplicação e divergência. Melhor centralizar tudo aqui.
+
+📂 core/labels.ts
+- Mapeia labels amigáveis (nomes de blocos, categorias, HUD?).
+- Útil para manter consistência em UI.
+- Risco: se blocos novos forem adicionados sem atualizar labels, pode quebrar UI ou exibir “undefined”. Precisa validar fallback seguro.
+
+📂 core/leafMaterial.ts
+- Material específico para folhas (THREE.MeshLambertMaterial ou similar).
+- Pode incluir transparência (alphaTest, transparent).
+- Cuidado com performance: folhas transparentes custam caro em WebGL (overdraw alto). Ideal limitar faces duplicadas e usar instancing ou atlas se expandir vegetação.
+
+📂 core/materials.ts
+- Registro global de materiais dos blocos.
+- Deve instanciar 1x e reusar (ótimo).
+- Ponto de atenção: se em algum lugar novos materiais forem criados a cada render/colocação de bloco, gera leak e FPS cai.
+- Checar se o projeto está de fato reusando via registry.
+
+📂 core/types.ts
+- Tipagem central: BlockId, VoxelData, etc.
+- Serve como contrato para store, mesher, serializer.
+- Muito positivo: reduz risco de divergência.
+- Atenção: se houver any/tipos abertos demais aqui, pode esconder bugs futuros (especialmente no serializer e undo/redo).
+
+📂 core/version.ts
+- Define a versão atual (0.1.x) para badge e changelog.
+- Já está conectado ao VersionBadge do HUD.
+- Atenção futura: quando salvar mundos, convém incluir essa versão no cabeçalho do save para garantir compatibilidade.
+
+📂 core/registry.ts
+- Coração do sistema: mantém Block Registry (id → textura, material, comportamento).
+- Usado no conta-gotas, hotbar, brush.
+- Força: centraliza lógica de blocos.
+Riscos:
+- Se App.tsx ainda mapear teclas direto para nomes de bloco, bypassa o registry → inconsistência.
+- Se os blocos tiverem propriedades extras (transparência, colisão, emissivo), precisa garantir que mesher e serializer usem as mesmas referências.
+- Se registry não for imutável (pode ser alterado em runtime sem controle), riscos de blocos inconsistentes em Undo/Redo.

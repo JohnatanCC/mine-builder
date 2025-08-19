@@ -1,4 +1,4 @@
-# Update 0.1.4 — 2025-08-18
+### [v0.1.4]— 2025-08-18
 **Novidades**
 - Introduz **áudio ambiente**.
 - Opções no painel de configurações:

@@ -1,17 +1,18 @@
-export type WindSlice = {
-  windEnabled: boolean;
-  setWindEnabled: (v: boolean) => void;
-  windStrength: number;
-  setWindStrength: (v: number) => void;
-  windSpeed: number;
-  setWindSpeed: (v: number) => void;
-};
+import { useWorld, type WorldState } from "../world.store";
 
-export const createWindSlice = (set: any): WindSlice => ({
-  windEnabled: true,
-  setWindEnabled: (v) => set({ windEnabled: v }),
-  windStrength: 0.35,
-  setWindStrength: (v) => set({ windStrength: v }),
-  windSpeed: 0.6,
-  setWindSpeed: (v) => set({ windSpeed: v }),
-});
+
+// Selectors compatíveis (podem ser usados com useWorld(select))
+export const selectWindEnabled = (s: WorldState) => s.windEnabled;
+export const selectWindStrength = (s: WorldState) => s.windStrength;
+export const selectWindSpeed = (s: WorldState) => s.windSpeed;
+
+// Setters delegando para o slice oficial (visual/combined no world.store)
+export function setWindEnabled(v: boolean) {
+  useWorld.getState().setWindEnabled(v);
+}
+export function setWindStrength(v: number) {
+  useWorld.getState().setWindStrength(v);
+}
+export function setWindSpeed(v: number) {
+  useWorld.getState().setWindSpeed(v);
+}
