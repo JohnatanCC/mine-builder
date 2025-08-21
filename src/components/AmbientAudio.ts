@@ -9,7 +9,7 @@ export function AmbientAudio() {
   const trackId = useWorld((s) => s.currentTrack);
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const [armed, setArmed] = React.useState(false); // já teve gesto do usuário?
+  const [armed, setArmed] = React.useState(false);
 
   React.useEffect(() => {
     if (!audioRef.current) {

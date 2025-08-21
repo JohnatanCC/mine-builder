@@ -1,17 +1,14 @@
+// UPDATE: src/components/Block.tsx
 import * as THREE from 'three';
 import * as React from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { getBlockTextures } from '../textures';
 import { getMaterialFor } from '../core/materials';
-import { useWindyLeafMaterial } from '../core/leafMaterial';
 import { key } from '../core/keys';
 import type { BlockType, Pos } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
 import { easeOutBack } from '../state/utils/blockanim';
-
-const isLeaves = (t: BlockType) =>
-  t === 'oak_leaves' || t === 'spruce_leaves' || t === 'birch_leaves';
+import { getBlockMaterialsCached } from '@/systems/textures/blockTextures';
 
 export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   const setBlock = useWorld((s) => s.setBlock);
@@ -20,7 +17,6 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const current = useWorld((s) => s.current);
   const setCurrent = useWorld((s) => s.setCurrent); // conta-gotas
-  const foliageMode = useWorld((s) => s.foliageMode);
 
   const setHoveredKey = useWorld((s) => s.setHoveredKey);
   const setHoveredAdj = useWorld((s) => s.setHoveredAdj);
@@ -62,7 +58,6 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const tryDeleteHere = () => {
     if (strokeLastKey.current === idKey) return;
-    // efeito transitório de remoção (ghost) — v0.1.1
     if (useWorld.getState().blockAnimEnabled) {
       addRemoveEffect(pos, type, useWorld.getState().blockAnimDuration);
     }
@@ -82,17 +77,15 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
     const native = e.nativeEvent as PointerEvent;
     const ctrl = native.ctrlKey || useWorld.getState().isCtrlDown;
 
-    setDown(e); // registra para diferenciar clique de arrasto
+    setDown(e);
 
-    // Conta-gotas
     if (isEyedrop(e)) {
-      native.preventDefault?.(); // evita auto-scroll do botão do meio
+      native.preventDefault?.();
       setCurrent(type);
       resetStroke();
       return;
     }
 
-    // Brush só com Ctrl: inicia stroke e executa a primeira ação
     if (ctrl) {
       beginStroke();
       if (e.button === 2) {
@@ -104,28 +97,20 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       }
       return;
     }
-
-    // Sem Ctrl: a ação acontecerá no PointerUp se for "clique" válido
   };
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    // atualiza ghost/preview sempre
     const adj = computeAdjacentPos(e);
     setHoveredAdj(adj);
 
     const native = e.nativeEvent as PointerEvent;
     const ctrl = native.ctrlKey || useWorld.getState().isCtrlDown;
-    const btns = native.buttons; // bitmask
+    const btns = native.buttons;
 
-    if (!ctrl) return; // sem Ctrl: sem brush no arrasto
+    if (!ctrl) return;
 
-    // segurança: se começou a arrastar já com Ctrl, abre stroke
     if ((btns & 3) && !useWorld.getState().currentStroke) beginStroke();
-
-    // Ctrl + Direito (bit 2) → apagar contínuo
     if (btns & 2) { tryDeleteHere(); return; }
-
-    // Ctrl + Esquerdo (bit 1) → colocar contínuo
     if (btns & 1) { tryPlaceAt(adj); }
   };
 
@@ -134,21 +119,17 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
     const ctrl = native.ctrlKey || useWorld.getState().isCtrlDown;
 
     if (ctrl) {
-      // finaliza brush
       endStroke();
       resetStroke();
       return;
     }
 
-    // Sem Ctrl: dispara ação apenas se for um clique (não arrasto) e respeitando cooldown
     if (!isClick(e) || !canFire()) { resetStroke(); return; }
 
     const button = getButton();
     if (button === 2) {
-      // clique direito: apagar 1
       tryDeleteHere();
     } else if (button === 0) {
-      // clique esquerdo: colocar 1 no adjacente
       const adj = computeAdjacentPos(e);
       tryPlaceAt(adj);
       setHoveredAdj(adj);
@@ -185,69 +166,49 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
     if (grpRef.current) grpRef.current.scale.setScalar(s);
   });
 
-  // ====== Folhas (cubo + planos com vento) ======
-  if (isLeaves(type)) {
-    const t = getBlockTextures();
-    const leafMap =
-      type === 'oak_leaves' ? t.oakLeaves :
-      type === 'spruce_leaves' ? t.spruceLeaves : t.birchLeaves;
-
-    const leavesDensity = useWorld((s) => s.leavesDensity);
-    const leavesScale = useWorld((s) => s.leavesScale);
-
-    const rotations =
-      foliageMode === 'cross3' ? [0, Math.PI / 3, -Math.PI / 3] :
-      foliageMode === 'cross2' ? [0, Math.PI / 2] : [];
-
-    const cubeMat = React.useMemo(
-      () =>
-        new THREE.MeshStandardMaterial({
-          map: leafMap,
-          transparent: true,
-          alphaTest: 0.25,
-          alphaToCoverage: true,
-          side: THREE.DoubleSide,
-          roughness: 1,
-          metalness: 0,
-          depthWrite: true,
-          opacity: leavesDensity,
-        }),
-      [leafMap, leavesDensity]
-    );
-
-    const windyMatRef = useWindyLeafMaterial(leafMap, {
-      enabled: useWorld.getState().windEnabled,
-      strength: useWorld.getState().windStrength,
-      speed: useWorld.getState().windSpeed,
-    });
-
-    return (
-      <group
-        ref={grpRef}
-        position={pos}
-        onPointerOver={() => setHoveredKey(idKey)}
-        onPointerOut={handlePointerOut}
-        onPointerMove={handlePointerMove}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-      >
-        {/* cubo base */}
-        <mesh castShadow receiveShadow material={cubeMat}>
-          <boxGeometry args={[1, 1, 1]} />
-        </mesh>
-
-        {/* planos com vento */}
-        {rotations.map((r, i) => (
-          <mesh key={i} rotation={[0, r, 0]} material={windyMatRef.current} renderOrder={1}>
-            <planeGeometry args={[leavesScale, leavesScale, 1, 1]} />
-          </mesh>
-        ))}
-      </group>
-    );
-  }
-
   // ====== Demais blocos (cubo) ======
-  const material = React.useMemo(() => getMaterialFor(type), [type]);
+  const fallbackMaterial = React.useMemo(() => getMaterialFor(type), [type]);
+
+  const [faceMaterials, setFaceMaterials] = React.useState<THREE.Material[] | null>(null);
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const mats = await getBlockMaterialsCached(type); // /blocks/<type>
+        if (alive) setFaceMaterials(mats);
+      } catch {
+        if (alive) setFaceMaterials(null);
+      }
+    })();
+    return () => { alive = false; setFaceMaterials(null); };
+  }, [type]);
+
+  // 🔧 Pós-processamento de materiais para tipos translúcidos
+  const materialToUse = React.useMemo(() => {
+    const tune = (m: THREE.Material) => {
+      if (type === 'glass') {
+        (m as any).transparent = true;
+        (m as any).opacity = 0.86;
+        (m as any).depthWrite = false; // evita flicker entre faces transparentes
+        return;
+      }
+      if (type === 'oak_leaves' || type === 'spruce_leaves' || type === 'birch_leaves') {
+        (m as any).transparent = true;
+        (m as any).alphaTest = 0.25; // recorte “dura” para folhas
+        (m as any).depthWrite = true;
+        (m as any).alphaToCoverage = true; // se MSAA, melhora bordas
+        (m as any).side = THREE.DoubleSide;
+      }
+    };
+
+    const base = faceMaterials ?? fallbackMaterial;
+    if (Array.isArray(base)) {
+      base.forEach(tune);
+      return base;
+    }
+    tune(base as THREE.Material);
+    return base;
+  }, [faceMaterials, fallbackMaterial, type]);
 
   return (
     <group
@@ -261,9 +222,9 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
     >
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1, 1, 1]} />
-        {Array.isArray(material)
-          ? material.map((m, i) => <primitive key={i} object={m} attach={`material-${i}`} />)
-          : <primitive object={material} attach="material" />}
+        {Array.isArray(materialToUse)
+          ? materialToUse.map((m, i) => <primitive key={i} object={m} attach={`material-${i}`} />)
+          : <primitive object={materialToUse as THREE.Material} attach="material" />}
       </mesh>
     </group>
   );

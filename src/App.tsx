@@ -7,27 +7,20 @@ import { Ground } from "./components/Ground";
 import { Highlight } from "./components/Highlight";
 import { Lights } from "./components/Lights";
 import FpsMeter from "./ui/FpsMeter";
-import { Hotbar } from "./ui/Hotbar";
 import { AppShell } from "./components/AppShell";
 import { TopBar } from "./ui/TopBar";
-import { LeftTools } from "./ui/LeftTools";
-import { RightInspector } from "./ui/RightInspector";
+import { Inspector } from "./ui/Inspector";
 import { CommandMenu } from "./ui/CommandMenu";
-import { tryRestoreAutoOnBoot } from "@/systems/localSaves";
-import { toast } from "sonner";
-import React from "react";
-
+import { BlockCatalog } from "./ui/BlockCatalog";
+import { ToolsRail } from "./ui/ToolsRail";
 export default function App() {
-   React.useEffect(() => {
-    const restored = tryRestoreAutoOnBoot();
-    if (restored) toast("♻️ Auto‑save restaurado automaticamente.");
-  }, []);
   return (
     <AppShell
       topBar={<TopBar />}
-      left={<LeftTools />}
-      right={<RightInspector />}
-      bottom={<Hotbar />}
+      left={<BlockCatalog />}         // catálogo fixo
+      right={<Inspector />}           // inspector
+      toolsOverlay={<ToolsRail />}    // ferramentas absolutas
+      // bottom={<HotbarDock />}         // hotbar acoplada ao rodapé
     >
       <Canvas camera={{ position: [12, 12, 12], fov: 50 }}>
         <Lights />
@@ -37,7 +30,7 @@ export default function App() {
         <Highlight />
       </Canvas>
 
-      {/* HUD / Overlays */}
+      {/* <LoadingOverlay/> */}
       <FpsMeter />
       <CommandMenu /> {/* NEW: Ctrl+K */}
     </AppShell>

@@ -1,9 +1,16 @@
 // UPDATE: src/state/world.store.ts
 import { create } from "zustand";
-import type { BlockType, BlockData, Mode, Pos, CameraMode } from "../core/types";
+import type {
+  BlockType,
+  BlockData,
+  Mode,
+  Pos,
+  CameraMode,
+} from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
 import { key as makeKey, parseKey } from "../core/keys"; // ✅ usar helpers oficiais
+import { BLOCKS_ORDER } from "../core/blocks/registry"; // ✅ para seed do quickbar
 
 // ===== Snapshot types =====
 export type Voxel = { x: number; y: number; z: number; type: BlockType };
@@ -30,65 +37,120 @@ export type WorldState = {
   setMode: (m: Mode) => void;
 
   // visual.slice
-  showWire: boolean; setShowWire: (v: boolean) => void;
-  highlightColor: "black" | "white"; setHighlightColor: (c: "black" | "white") => void;
-  fogEnabled: boolean; setFogEnabled: (v: boolean) => void;
-  fogDensity: number; setFogDensity: (v: number) => void;
-  lightAnimate: boolean; setLightAnimate: (v: boolean) => void;
-  lightSpeed: number; setLightSpeed: (v: number) => void;
-  lightIntensity: number; setLightIntensity: (v: number) => void;
-  foliageMode: "block" | "cross2" | "cross3"; setFoliageMode: (m: "block" | "cross2" | "cross3") => void;
-  leavesDensity: number; setLeavesDensity: (v: number) => void;
-  leavesScale: number; setLeavesScale: (v: number) => void;
-  windEnabled: boolean; setWindEnabled: (v: boolean) => void;
-  windStrength: number; setWindStrength: (v: number) => void;
-  windSpeed: number; setWindSpeed: (v: number) => void;
+  showWire: boolean;
+  setShowWire: (v: boolean) => void;
+  highlightColor: "black" | "white";
+  setHighlightColor: (c: "black" | "white") => void;
+  fogEnabled: boolean;
+  setFogEnabled: (v: boolean) => void;
+  fogDensity: number;
+  setFogDensity: (v: number) => void;
+  lightAnimate: boolean;
+  setLightAnimate: (v: boolean) => void;
+  lightSpeed: number;
+  setLightSpeed: (v: number) => void;
+  lightIntensity: number;
+  setLightIntensity: (v: number) => void;
+  foliageMode: "block" | "cross2" | "cross3";
+  setFoliageMode: (m: "block" | "cross2" | "cross3") => void;
+  leavesDensity: number;
+  setLeavesDensity: (v: number) => void;
+  leavesScale: number;
+  setLeavesScale: (v: number) => void;
+  windEnabled: boolean;
+  setWindEnabled: (v: boolean) => void;
+  windStrength: number;
+  setWindStrength: (v: number) => void;
+  windSpeed: number;
+  setWindSpeed: (v: number) => void;
 
   // input.slice
-  hoveredKey?: string | null; setHoveredKey: (k?: string | null) => void;
-  hoveredAdj: Pos | null; setHoveredAdj: (p: Pos | null) => void;
-  mouse: { x: number; y: number }; setMouse: (x: number, y: number) => void;
-  lastActionAt: number; setLastActionAt: (t: number) => void;
-  isCtrlDown: boolean; setCtrlDown: (v: boolean) => void;
+  hoveredKey?: string | null;
+  setHoveredKey: (k?: string | null) => void;
+  hoveredAdj: Pos | null;
+  setHoveredAdj: (p: Pos | null) => void;
+  mouse: { x: number; y: number };
+  setMouse: (x: number, y: number) => void;
+  lastActionAt: number;
+  setLastActionAt: (t: number) => void;
+  isCtrlDown: boolean;
+  setCtrlDown: (v: boolean) => void;
 
   // ui.slice
-  showFps: boolean; setShowFps: (v: boolean) => void;
-  showHelp: boolean; setShowHelp: (v: boolean) => void;
-  cameraMode: CameraMode; setCameraMode: (m: CameraMode) => void;
+  showFps: boolean;
+  setShowFps: (v: boolean) => void;
+  showHelp: boolean;
+  setShowHelp: (v: boolean) => void;
+  cameraMode: CameraMode;
+  setCameraMode: (m: CameraMode) => void;
 
   // history.slice
-  past: HistoryItem[]; future: HistoryItem[]; currentStroke: HistoryOp[] | null;
-  beginStroke: () => void; endStroke: () => void;
-  undo: () => void; redo: () => void;
-  canUndo: () => boolean; canRedo: () => boolean;
+  past: HistoryItem[];
+  future: HistoryItem[];
+  currentStroke: HistoryOp[] | null;
+  beginStroke: () => void;
+  endStroke: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
 
   // anim.slice
-  blockAnimEnabled: boolean; setBlockAnimEnabled: (v: boolean) => void;
-  blockAnimDuration: number; setBlockAnimDuration: (v: number) => void;
-  blockAnimBounce: number; setBlockAnimBounce: (v: number) => void;
-  effects: { id: number; pos: Pos; type: BlockType; t0: number; duration: number }[];
+  blockAnimEnabled: boolean;
+  setBlockAnimEnabled: (v: boolean) => void;
+  blockAnimDuration: number;
+  setBlockAnimDuration: (v: number) => void;
+  blockAnimBounce: number;
+  setBlockAnimBounce: (v: number) => void;
+  effects: {
+    id: number;
+    pos: Pos;
+    type: BlockType;
+    t0: number;
+    duration: number;
+  }[];
   addRemoveEffect: (pos: Pos, type: BlockType, duration?: number) => void;
   gcEffects: () => void;
 
   // audio.slice
-  audioEnabled: boolean; setAudioEnabled: (v: boolean) => void;
-  audioVolume: number; setAudioVolume: (v: number) => void;
-  audioTracks: AmbientId[]; currentTrack: AmbientId; setCurrentTrack: (id: AmbientId) => void;
+  audioEnabled: boolean;
+  setAudioEnabled: (v: boolean) => void;
+  audioVolume: number;
+  setAudioVolume: (v: number) => void;
+  audioTracks: AmbientId[];
+  currentTrack: AmbientId;
+  setCurrentTrack: (id: AmbientId) => void;
 
   // NEW: snapshot API
   getSnapshot: () => WorldSnapshot;
   loadSnapshot: (snap: WorldSnapshot) => void;
+
+  quickbar: BlockType[];
+  setQuickbar: (items: BlockType[]) => void;
+  setQuickbarSlot: (index: number, type: BlockType) => void;
+  swapQuickbarSlots: (a: number, b: number) => void;
+  clearQuickbarSlot: (index: number) => void;
 };
 
 // ===== importar slices =====
-import { createBlocksSlice }    from "./slices/blocks.slice";
+import { createBlocksSlice } from "./slices/blocks.slice";
 import { createSelectionSlice } from "./slices/selection.slice";
-import { createVisualSlice }    from "./slices/visual.slice";
-import { createInputSlice }     from "./slices/input.slice";
-import { createUISlice }        from "./slices/ui.slice";
-import { createHistorySlice }   from "./slices/history.slice";
-import { createAnimSlice }      from "./slices/anim.slice";
-import { createAudioSlice }     from "./slices/audio.slice";
+import { createVisualSlice } from "./slices/visual.slice";
+import { createInputSlice } from "./slices/input.slice";
+import { createUISlice } from "./slices/ui.slice";
+import { createHistorySlice } from "./slices/history.slice";
+import { createAnimSlice } from "./slices/anim.slice";
+import { createAudioSlice } from "./slices/audio.slice";
+
+// ===== quickbar defaults =====
+const DEFAULT_QUICKBAR: BlockType[] = (() => {
+  const base = (
+    BLOCKS_ORDER?.length ? BLOCKS_ORDER : ["stone", "dirt"]
+  ) as BlockType[];
+  const out: BlockType[] = [];
+  for (let i = 0; i < 10; i++) out.push(base[i % base.length]);
+  return out;
+})();
 
 // ===== create store (compacto) =====
 export const useWorld = create<WorldState>()((set, get, api) => {
@@ -137,7 +199,6 @@ export const useWorld = create<WorldState>()((set, get, api) => {
   };
 
   return {
-    // === slices (como estavam) ===
     blocks: safeBlocks,
     setBlock: S.setBlock!,
     removeBlock: S.removeBlock!,
@@ -226,5 +287,32 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     // === snapshot API ===
     getSnapshot,
     loadSnapshot,
+
+    // === quickbar API ===
+    quickbar: DEFAULT_QUICKBAR,
+    setQuickbar: (items) => {
+      const arr = items.slice(0, 10) as BlockType[];
+      while (arr.length < 10) arr.push(arr[0] ?? "stone");
+      set({ quickbar: arr });
+    },
+    setQuickbarSlot: (index, type) => {
+      if (index < 0 || index > 9) return;
+      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
+      arr[index] = type;
+      set({ quickbar: arr });
+    },
+    swapQuickbarSlots: (a, b) => {
+      if (a < 0 || a > 9 || b < 0 || b > 9) return;
+      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
+      [arr[a], arr[b]] = [arr[b], arr[a]];
+      set({ quickbar: arr });
+    },
+    clearQuickbarSlot: (index) => {
+      if (index < 0 || index > 9) return;
+      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
+      // mantém sempre algum bloco válido
+      arr[index] = get().current ?? arr[index] ?? DEFAULT_QUICKBAR[index];
+      set({ quickbar: arr });
+    },
   };
 });

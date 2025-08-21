@@ -11,6 +11,8 @@ import { exportWorldJSON, handleImportFile } from "../systems/world/serializer";
 import { useThemeContext } from "@/ui/theme/ThemeProvider";
 import { useWorld } from "@/state/world.store";
 import { Badge } from "@/components/ui/badge";
+import { PiMouseLeftClickFill, PiMouseRightClickFill } from "react-icons/pi";
+import Logo from "../assets/mb_logo.png";
 
 export const TopBar: React.FC = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -29,15 +31,14 @@ export const TopBar: React.FC = () => {
   return (
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-3">
-        <div className="font-semibold tracking-wide">Mine‑Builder</div>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">v0.2.0</span>
-        <Badge variant="secondary" className="ml-2">Blocos: {blockCount}</Badge>
-        <Separator orientation="vertical" className="mx-2 h-4" />
-        <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground">
-          <span><kbd className="rounded bg-muted px-1">LMB</kbd> Coloca</span>
-          <span><kbd className="rounded bg-muted px-1">RMB</kbd> Remove</span>
-          <span><kbd className="rounded bg-muted px-1">Ctrl</kbd> Pincel</span>
-        </div>
+        <div className="flex items-center">
+          <img src={Logo} alt="Logo" className="inline w-6 mr-2" />
+          <span className="font-semibold tracking-wide ">
+          Mine‑Builder
+          </span>
+          </div>
+        <span className="rounded-sm bg-muted px-1.5 py-0.5  leading-none text-muted-foreground">v0.2.0</span>
+        <Badge variant="secondary" className="ml-2 rounded-sm">Blocos: {blockCount}</Badge>
       </div>
 
       <div className="flex items-center gap-2">

@@ -1,99 +1,194 @@
-import * as THREE from 'three';
-import type { BlockType } from '../types';
-import { getBlockTextures } from '../../textures';
-
-// Definição de um bloco no registro
+// UPDATE: src/core/blocks/registry.ts
+import * as THREE from "three";
+import type { BlockType } from "../types";
+import { BLOCK_LABEL } from "../labels";
+import { resolveBlockIconURL } from "@/systems/textures/blockIcon";
 export type BlockDef = {
   id: BlockType;
   label: string;
-  category: 'stone' | 'wood' | 'log' | 'leaves' | 'misc';
+  category: "stone" | "wood" | "log" | "leaves" | "misc" | "brick";
   isLeaves?: boolean;
-  // material gerado sob demanda
-  material: () => THREE.Material | THREE.Material[];
-  // textura usada na hotbar/preview
+  material?: () => THREE.Material | THREE.Material[];
   preview: () => THREE.Texture;
 };
 
-// helpers locais
-const solid = (map: THREE.Texture, extra?: Partial<THREE.MeshStandardMaterialParameters>) =>
-  new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, map, ...extra });
+// Helpers locais
+function makePlaceholderTex(hex = 0x9c9c9c): THREE.Texture {
+  const data = new Uint8Array([
+    (hex >> 16) & 255,
+    (hex >> 8) & 255,
+    hex & 255,
+    255,
+  ]);
+  const tex = new THREE.DataTexture(data, 1, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
 
-const logFaces = (bark: THREE.Texture, rings: THREE.Texture) =>
-  [solid(bark), solid(bark), solid(rings), solid(rings), solid(bark), solid(bark)] as THREE.Material[];
+const loader = new THREE.TextureLoader();
+function loadPreviewTextureFromFolder(type: BlockType): THREE.Texture {
+  const url = resolveBlockIconURL(type); // icon.png -> top.png -> side.png -> all.png -> faces
+  if (url) {
+    const t = loader.load(url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.NearestMipmapNearestFilter;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.generateMipmaps = true;
+    return t;
+  }
+  return makePlaceholderTex();
+}
 
-export const REGISTRY: Record<BlockType, BlockDef> = (() => {
-  const t = getBlockTextures();
-  const r: Record<BlockType, BlockDef> = {
-    // pedras
-    stone: {
-      id: 'stone', label: 'Pedra', category: 'stone',
-      material: () => solid(t.stone),
-      preview: () => t.stone
-    },
-    stone_brick: {
-      id: 'stone_brick', label: 'Tijolo de Pedra', category: 'stone',
-      material: () => solid(t.stoneBricks),
-      preview: () => t.stoneBricks
-    },
-    cobblestone: {
-      id: 'cobblestone', label: 'Pedregulho', category: 'stone',
-      material: () => solid(t.cobblestone),
-      preview: () => t.cobblestone
-    },
-    glass: {
-      id: 'glass', label: 'Vidro', category: 'misc',
-      material: () => solid(t.glass, { transparent: true, opacity: 0.55, envMapIntensity: 0.25 }),
-      preview: () => t.glass
-    },
+export const REGISTRY: Record<BlockType, BlockDef> = {
+  // pedras
+  stone: {
+    id: "stone",
+    label: BLOCK_LABEL.stone,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("stone"),
+  },
+  stone_brick: {
+    id: "stone_brick",
+    label: BLOCK_LABEL.stone_brick,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("stone_brick"),
+  },
+  cobblestone: {
+    id: "cobblestone",
+    label: BLOCK_LABEL.cobblestone,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("cobblestone"),
+  },
+  glass: {
+    id: "glass",
+    label: BLOCK_LABEL.glass,
+    category: "misc",
+    preview: () => loadPreviewTextureFromFolder("glass"),
+  },
 
-    // chão/misc
-    grass: {
-      id: 'grass', label: 'Grama', category: 'misc',
-      material: () => ([
-        solid(t.grassSide), solid(t.grassSide),
-        solid(t.grassTop),  solid(t.dirt),
-        solid(t.grassSide), solid(t.grassSide),
-      ]),
-      preview: () => t.grassTop
-    },
-    dirt: {
-      id: 'dirt', label: 'Terra', category: 'misc',
-      material: () => solid(t.dirt),
-      preview: () => t.dirt
-    },
+  //brick
+  brick: {
+    id: "brick",
+    label: BLOCK_LABEL.brick,
+    category: "brick",
+    preview: () => loadPreviewTextureFromFolder("brick"),
+  },
 
-    // pranchas
-    oak_planks:    { id: 'oak_planks',    label: 'Madeira Carvalho', category: 'wood', material: () => solid(t.oak),          preview: () => t.oak },
-    spruce_planks: { id: 'spruce_planks', label: 'Madeira Pinheiro', category: 'wood', material: () => solid(t.sprucePlanks), preview: () => t.sprucePlanks },
-    birch_planks:  { id: 'birch_planks',  label: 'Madeira Bétula',   category: 'wood', material: () => solid(t.birchPlanks),  preview: () => t.birchPlanks },
+  // chão/misc
+  grass: {
+    id: "grass",
+    label: BLOCK_LABEL.grass,
+    category: "misc",
+    preview: () => loadPreviewTextureFromFolder("grass"),
+  },
+  dirt: {
+    id: "dirt",
+    label: BLOCK_LABEL.dirt,
+    category: "misc",
+    preview: () => loadPreviewTextureFromFolder("dirt"),
+  },
+  white_concrete: {
+    id: "white_concrete",
+    label: BLOCK_LABEL.white_concrete,
+    category: "misc",
+    preview: () => loadPreviewTextureFromFolder("white_concrete"),
+  },
 
-    // troncos
-    oak_log:    { id: 'oak_log',    label: 'Tronco Carvalho', category: 'log', material: () => logFaces(t.oakBark,    t.oakRings),    preview: () => t.oakBark },
-    spruce_log: { id: 'spruce_log', label: 'Tronco Pinheiro', category: 'log', material: () => logFaces(t.spruceBark, t.spruceRings), preview: () => t.spruceBark },
-    birch_log:  { id: 'birch_log',  label: 'Tronco Bétula',   category: 'log', material: () => logFaces(t.birchBark,  t.birchRings),  preview: () => t.birchBark },
+  // pranchas
+  oak_planks: {
+    id: "oak_planks",
+    label: BLOCK_LABEL.oak_planks,
+    category: "wood",
+    preview: () => loadPreviewTextureFromFolder("oak_planks"),
+  },
+  spruce_planks: {
+    id: "spruce_planks",
+    label: BLOCK_LABEL.spruce_planks,
+    category: "wood",
+    preview: () => loadPreviewTextureFromFolder("spruce_planks"),
+  },
+  birch_planks: {
+    id: "birch_planks",
+    label: BLOCK_LABEL.birch_planks,
+    category: "wood",
+    preview: () => loadPreviewTextureFromFolder("birch_planks"),
+  },
 
-    // folhas
-    oak_leaves:    { id: 'oak_leaves',    label: 'Folhas Carvalho', category: 'leaves', isLeaves: true, material: () => solid(t.oakLeaves,    { transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, alphaToCoverage: true }), preview: () => t.oakLeaves },
-    spruce_leaves: { id: 'spruce_leaves', label: 'Folhas Pinheiro', category: 'leaves', isLeaves: true, material: () => solid(t.spruceLeaves, { transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, alphaToCoverage: true }), preview: () => t.spruceLeaves },
-    birch_leaves:  { id: 'birch_leaves',  label: 'Folhas Bétula',   category: 'leaves', isLeaves: true, material: () => solid(t.birchLeaves,  { transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, alphaToCoverage: true }), preview: () => t.birchLeaves },
+  // troncos
+  oak_log: {
+    id: "oak_log",
+    label: BLOCK_LABEL.oak_log,
+    category: "log",
+    preview: () => loadPreviewTextureFromFolder("oak_log"),
+  },
+  spruce_log: {
+    id: "spruce_log",
+    label: BLOCK_LABEL.spruce_log,
+    category: "log",
+    preview: () => loadPreviewTextureFromFolder("spruce_log"),
+  },
+  birch_log: {
+    id: "birch_log",
+    label: BLOCK_LABEL.birch_log,
+    category: "log",
+    preview: () => loadPreviewTextureFromFolder("birch_log"),
+  },
 
-    // legacy (compat)
-    oak: { id: 'oak', label: 'Carvalho (legacy)', category: 'wood', material: () => solid(t.oak), preview: () => t.oak },
-  };
-  return r;
-})();
+  // folhas
+  oak_leaves: {
+    id: "oak_leaves",
+    label: BLOCK_LABEL.oak_leaves,
+    category: "leaves",
+    isLeaves: true,
+    preview: () => loadPreviewTextureFromFolder("oak_leaves"),
+  },
+  spruce_leaves: {
+    id: "spruce_leaves",
+    label: BLOCK_LABEL.spruce_leaves,
+    category: "leaves",
+    isLeaves: true,
+    preview: () => loadPreviewTextureFromFolder("spruce_leaves"),
+  },
+  birch_leaves: {
+    id: "birch_leaves",
+    label: BLOCK_LABEL.birch_leaves,
+    category: "leaves",
+    isLeaves: true,
+    preview: () => loadPreviewTextureFromFolder("birch_leaves"),
+  },
+
+};
 
 // Lista ordenada para hotbar (ajuste como quiser)
 export const BLOCKS_ORDER: BlockType[] = [
-  'stone','stone_brick','cobblestone','glass',
-  'oak_planks','spruce_planks','birch_planks',
-  'oak_log','spruce_log','birch_log',
-  'oak_leaves','spruce_leaves','birch_leaves',
-  'grass','dirt'
+  "stone",
+  "stone_brick",
+  "cobblestone",
+  "glass",
+  "oak_planks",
+  "spruce_planks",
+  "birch_planks",
+  "oak_log",
+  "spruce_log",
+  "birch_log",
+  "oak_leaves",
+  "spruce_leaves",
+  "birch_leaves",
+  "grass",
+  "dirt",
+  "brick"
 ];
 
 // Acesso helpers
-export const getLabel = (t: BlockType) => REGISTRY[t].label;
-export const getPreviewTexture = (t: BlockType) => REGISTRY[t].preview();
-export const isLeavesType = (t: BlockType) => !!REGISTRY[t].isLeaves;
-export const getMaterialForFromRegistry = (t: BlockType) => REGISTRY[t].material();
+export const getLabel = (t: BlockType) => REGISTRY[t]?.label ?? t;
+export const getPreviewTexture = (t: BlockType) =>
+  REGISTRY[t]?.preview() ?? loadPreviewTextureFromFolder(t);
+export const isLeavesType = (t: BlockType) =>
+  !!(REGISTRY[t]?.isLeaves || REGISTRY[t]?.category === "leaves");
+export const getMaterialForFromRegistry = (
+  t: BlockType
+): THREE.Material | THREE.Material[] | undefined => REGISTRY[t]?.material?.();
