@@ -9,8 +9,7 @@ import type {
 } from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
-import { key as makeKey, parseKey } from "../core/keys"; // ✅ usar helpers oficiais
-import { BLOCKS_ORDER } from "../core/blocks/registry"; // ✅ para seed do quickbar
+import { key as makeKey, parseKey } from "../core/keys";
 
 // ===== Snapshot types =====
 export type Voxel = { x: number; y: number; z: number; type: BlockType };
@@ -19,6 +18,8 @@ export type WorldSnapshot = {
   blocks: Voxel[];
   // futuras props (luz, vento etc.)
 };
+
+
 
 // ===== WorldState (soma dos slices) =====
 export type WorldState = {
@@ -124,12 +125,6 @@ export type WorldState = {
   // NEW: snapshot API
   getSnapshot: () => WorldSnapshot;
   loadSnapshot: (snap: WorldSnapshot) => void;
-
-  quickbar: BlockType[];
-  setQuickbar: (items: BlockType[]) => void;
-  setQuickbarSlot: (index: number, type: BlockType) => void;
-  swapQuickbarSlots: (a: number, b: number) => void;
-  clearQuickbarSlot: (index: number) => void;
 };
 
 // ===== importar slices =====
@@ -141,16 +136,6 @@ import { createUISlice } from "./slices/ui.slice";
 import { createHistorySlice } from "./slices/history.slice";
 import { createAnimSlice } from "./slices/anim.slice";
 import { createAudioSlice } from "./slices/audio.slice";
-
-// ===== quickbar defaults =====
-const DEFAULT_QUICKBAR: BlockType[] = (() => {
-  const base = (
-    BLOCKS_ORDER?.length ? BLOCKS_ORDER : ["stone", "dirt"]
-  ) as BlockType[];
-  const out: BlockType[] = [];
-  for (let i = 0; i < 10; i++) out.push(base[i % base.length]);
-  return out;
-})();
 
 // ===== create store (compacto) =====
 export const useWorld = create<WorldState>()((set, get, api) => {
@@ -288,31 +273,6 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     getSnapshot,
     loadSnapshot,
 
-    // === quickbar API ===
-    quickbar: DEFAULT_QUICKBAR,
-    setQuickbar: (items) => {
-      const arr = items.slice(0, 10) as BlockType[];
-      while (arr.length < 10) arr.push(arr[0] ?? "stone");
-      set({ quickbar: arr });
-    },
-    setQuickbarSlot: (index, type) => {
-      if (index < 0 || index > 9) return;
-      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
-      arr[index] = type;
-      set({ quickbar: arr });
-    },
-    swapQuickbarSlots: (a, b) => {
-      if (a < 0 || a > 9 || b < 0 || b > 9) return;
-      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
-      [arr[a], arr[b]] = [arr[b], arr[a]];
-      set({ quickbar: arr });
-    },
-    clearQuickbarSlot: (index) => {
-      if (index < 0 || index > 9) return;
-      const arr = (get().quickbar ?? DEFAULT_QUICKBAR).slice();
-      // mantém sempre algum bloco válido
-      arr[index] = get().current ?? arr[index] ?? DEFAULT_QUICKBAR[index];
-      set({ quickbar: arr });
-    },
+
   };
 });

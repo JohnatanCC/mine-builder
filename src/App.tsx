@@ -13,6 +13,7 @@ import { Inspector } from "./ui/Inspector";
 import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
 import { ToolsRail } from "./ui/ToolsRail";
+import { AmbientAudio } from "./components/AmbientAudio";
 export default function App() {
   return (
     <AppShell
@@ -33,6 +34,7 @@ export default function App() {
       {/* <LoadingOverlay/> */}
       <FpsMeter />
       <CommandMenu /> {/* NEW: Ctrl+K */}
+      <AmbientAudio />
     </AppShell>
   );
 }

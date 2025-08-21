@@ -1,3 +1,4 @@
+// UPDATE: src/ui/panels/RightInspector.tsx
 import * as React from "react";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
@@ -16,6 +17,11 @@ import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+// ⬇️ imports para a seção de Áudio
+import { Switch } from "@/components/ui/switch";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 /* ----------------- UI helpers ----------------- */
 const Row: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
@@ -45,11 +51,24 @@ export const Inspector: React.FC = () => {
   const lightIntensity = useWorld((s) => s.lightIntensity);
   const setLightIntensity = useWorld((s) => s.setLightIntensity);
 
+  // Áudio (estado global)
+  const audioEnabled = useWorld((s) => s.audioEnabled);
+  const setAudioEnabled = useWorld((s) => s.setAudioEnabled);
+  const audioVolume = useWorld((s) => s.audioVolume);
+  const setAudioVolume = useWorld((s) => s.setAudioVolume);
+  const tracks = useWorld((s) => s.audioTracks);
+  const currentTrack = useWorld((s) => s.currentTrack);
+  const setCurrentTrack = useWorld((s) => s.setCurrentTrack);
+
+  const hasTracks = (tracks?.length ?? 0) > 0;
+
   // Sliders (UI local)
   const [ls, setLS] = React.useState(lightSpeed);
   const [li, setLI] = React.useState(lightIntensity);
+  const [vol, setVol] = React.useState(audioVolume);
   React.useEffect(() => setLS(lightSpeed), [lightSpeed]);
   React.useEffect(() => setLI(lightIntensity), [lightIntensity]);
+  React.useEffect(() => setVol(audioVolume), [audioVolume]);
 
   // Limpar mundo
   const onClearWorld = () => {
@@ -99,7 +118,7 @@ export const Inspector: React.FC = () => {
     [refreshSlots]
   );
 
-  // Auto-save a cada 60s (mantém spinner por pelo menos 600ms)
+  // Auto-save a cada 60s
   React.useEffect(() => {
     const id = setInterval(() => {
       setSaving(true);
@@ -107,10 +126,8 @@ export const Inspector: React.FC = () => {
       const meta = saveAuto(snap, "0.2.x");
       setAutoMeta(meta);
       const tid = setTimeout(() => setSaving(false), 600);
-      // limpar o timeout gerado neste tick
       return () => clearTimeout(tid);
     }, 60_000);
-
     return () => clearInterval(id);
   }, []);
 
@@ -187,7 +204,7 @@ export const Inspector: React.FC = () => {
       <div className="p-2">
         <Accordion
           type="multiple"
-          defaultValue={["light", "slots"]} // folhas/vento removidos
+          defaultValue={["light", "audio", "slots"]}
           className="w-full"
         >
           {/* Luz / Sombras */}
@@ -217,6 +234,53 @@ export const Inspector: React.FC = () => {
                   onValueCommit={([v]) => setLightIntensity(v)}
                 />
                 <Value v={li} />
+              </Row>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Áudio */}
+          <AccordionItem value="audio">
+            <AccordionTrigger>Áudio</AccordionTrigger>
+            <AccordionContent className="pt-0">
+              <Row label="Música ambiente">
+                <Switch checked={audioEnabled} onCheckedChange={setAudioEnabled} />
+                <span className="text-[11px] text-muted-foreground w-8 text-right">
+                  {audioEnabled ? "ON" : "OFF"}
+                </span>
+              </Row>
+
+              <Row label="Trilha">
+                <Select
+                  value={currentTrack || ""}
+                  onValueChange={(v) => setCurrentTrack(v)}
+                >
+                  <SelectTrigger className="w-44 h-7">
+                    <SelectValue placeholder="(nenhuma)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hasTracks
+                      ? tracks.map((id: string) => (
+                          <SelectItem key={id} value={id}>{id}</SelectItem>
+                        ))
+                      : <SelectItem value="">(nenhuma encontrada)</SelectItem>}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              <Row label="Volume">
+                <Slider
+                  value={[vol]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  className="w-40"
+                  disabled={!audioEnabled || !hasTracks}
+                  onValueChange={([v]) => setVol(v)}
+                  onValueCommit={([v]) => setAudioVolume(v)}
+                />
+                <span className="w-10 text-right tabular-nums text-[11px] text-muted-foreground">
+                  {(vol * 100) | 0}%
+                </span>
               </Row>
             </AccordionContent>
           </AccordionItem>

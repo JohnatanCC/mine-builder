@@ -5,13 +5,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { FileDown, FileUp, Layers, Info, ChevronDown, Sun, Moon, Laptop2 } from "lucide-react";
 import { exportWorldJSON, handleImportFile } from "../systems/world/serializer";
 import { useThemeContext } from "@/ui/theme/ThemeProvider";
 import { useWorld } from "@/state/world.store";
 import { Badge } from "@/components/ui/badge";
-import { PiMouseLeftClickFill, PiMouseRightClickFill } from "react-icons/pi";
 import Logo from "../assets/mb_logo.png";
 
 export const TopBar: React.FC = () => {
