@@ -19,8 +19,6 @@ export type WorldSnapshot = {
   // futuras props (luz, vento etc.)
 };
 
-
-
 // ===== WorldState (soma dos slices) =====
 export type WorldState = {
   // blocks.slice
@@ -272,7 +270,52 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     // === snapshot API ===
     getSnapshot,
     loadSnapshot,
-
-
   };
 });
+
+// ⬇️⬇️ NOVO: helper para importar mundos em JSON (usado no App.tsx)
+type ExternalBlock = {
+  x: number;
+  y: number;
+  z: number;
+  type: BlockType | string;
+};
+
+// Guards para estreitar o tipo de payload
+function hasWorld(
+  obj: unknown
+): obj is { world: { blocks?: ExternalBlock[] } } {
+  return (
+    !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world
+  );
+}
+function hasBlocks(obj: unknown): obj is { blocks?: ExternalBlock[] } {
+  return !!obj && typeof obj === "object" && "blocks" in obj;
+}
+
+/** Converte JSON externo para o WorldSnapshot canônico */
+function externalToSnapshot(payload: unknown): WorldSnapshot {
+  let arr: ExternalBlock[] = [];
+
+  if (hasWorld(payload) && Array.isArray(payload.world.blocks)) {
+    arr = payload.world.blocks;
+  } else if (hasBlocks(payload) && Array.isArray(payload.blocks)) {
+    arr = payload.blocks;
+  }
+
+  const voxels: Voxel[] = arr.map((b) => ({
+    x: Number(b.x) | 0,
+    y: Number(b.y) | 0,
+    z: Number(b.z) | 0,
+    // confiamos no pipeline para fornecer tipos válidos; se quiser, valide aqui
+    type: b.type as BlockType,
+  }));
+
+  return { blocks: voxels };
+}
+
+/** Importa um mundo exportado (JSON) para o estado */
+export function importWorld(payload: unknown) {
+  const snap = externalToSnapshot(payload);
+  useWorld.getState().loadSnapshot(snap);
+}

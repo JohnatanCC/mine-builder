@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { TerrainPanel } from "./TerrainPanel";
 
 /* ----------------- UI helpers ----------------- */
 const Row: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
@@ -260,8 +261,8 @@ export const Inspector: React.FC = () => {
                   <SelectContent>
                     {hasTracks
                       ? tracks.map((id: string) => (
-                          <SelectItem key={id} value={id}>{id}</SelectItem>
-                        ))
+                        <SelectItem key={id} value={id}>{id}</SelectItem>
+                      ))
                       : <SelectItem value="">(nenhuma encontrada)</SelectItem>}
                   </SelectContent>
                 </Select>
@@ -282,6 +283,13 @@ export const Inspector: React.FC = () => {
                   {(vol * 100) | 0}%
                 </span>
               </Row>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="terrain">
+            <AccordionTrigger>Terreno</AccordionTrigger>
+            <AccordionContent className="pt-0">
+              <TerrainPanel />
             </AccordionContent>
           </AccordionItem>
 

@@ -1,5 +1,6 @@
 // UPDATE: src/App.tsx
 import { Canvas } from "@react-three/fiber";
+import * as React from "react";
 
 import { World } from "./components/World";
 import { Ground } from "./components/Ground";
@@ -16,16 +17,30 @@ import { AmbientAudio } from "./components/AmbientAudio";
 import { Keybinds } from "./components/Keybinds";
 import { CameraControls } from "./components/CameraControls";
 import { RemoveBurst } from "./components/effects/RemoveBurst";
+
+// função de importação já existente
+import { importWorld } from "@/state/world.store";
+
 export default function App() {
+  React.useEffect(() => {
+    // carrega a ilha padrão ao iniciar
+    fetch("/worlds/default-island.json")
+      .then(res => res.json())
+      .then(data => {
+        importWorld(data);
+      })
+      .catch(err => {
+        console.error("Falha ao carregar terreno padrão:", err);
+      });
+  }, []);
+
   return (
     <AppShell
       topBar={<TopBar />}
       left={<BlockCatalog />}         // catálogo fixo
       right={<Inspector />}           // inspector
       toolsOverlay={<ToolsRail />}    // ferramentas absolutas
-    // bottom={<HotbarDock />}         // hotbar acoplada ao rodapé
     >
-
       <Canvas camera={{ position: [12, 12, 12], fov: 50 }}>
         <Lights />
         <CameraControls />
@@ -35,9 +50,8 @@ export default function App() {
         <RemoveBurst />
       </Canvas>
 
-      {/* <LoadingOverlay/> */}
       <FpsMeter />
-      <CommandMenu /> {/* NEW: Ctrl+K */}
+      <CommandMenu /> {/* Ctrl+K */}
       <AmbientAudio />
       <Keybinds />
     </AppShell>
