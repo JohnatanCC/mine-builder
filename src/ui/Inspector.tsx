@@ -83,14 +83,13 @@ export const Inspector: React.FC = () => {
   const [slots, setSlots] = React.useState(() => listSlots());
   const [saving, setSaving] = React.useState(false);
   const [autoMeta, setAutoMeta] = React.useState(() => loadAuto());
-  const [lastSavedSlot, setLastSavedSlot] = React.useState<number | null>(null);
+  
   const refreshSlots = React.useCallback(() => setSlots(listSlots()), []);
 
   const saveToSlot = React.useCallback(
     (n: number) => {
       const snap = useWorld.getState().getSnapshot();
       saveSlot(n, snap, "0.2.x");
-      setLastSavedSlot(n);
       refreshSlots();
       toast(`Slot ${n} salvo — ${fmt(Date.now())}`);
     },

@@ -18,7 +18,6 @@ import { ArrowUpAZ } from "lucide-react";
 const SLOT = 56;           // px do ícone na grade
 const GAP = 8;             // gap entre ícones
 const COLUMNS = 5;         // sempre 5 colunas (pedido do usuário)
-const PANEL_W = overlayOffsets.leftX() + COLUMNS * SLOT + (COLUMNS - 1) * GAP;
 
 export const BlockCatalogPanel: React.FC = () => {
     const [q, setQ] = React.useState("");
@@ -31,7 +30,7 @@ export const BlockCatalogPanel: React.FC = () => {
     const all = React.useMemo(() => Object.keys(REGISTRY) as BlockType[], []);
     const filtered = React.useMemo(() => {
         const needle = q.trim().toLowerCase();
-        let arr = all.filter((t) => {
+        let arr = all.filter(() => {
             if (tab === "decor") return false; // futuro: filtrar por categoria de decoração
             return true;
         });
