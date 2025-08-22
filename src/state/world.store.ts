@@ -19,7 +19,7 @@ export type WorldSnapshot = {
   blocks: Voxel[];
 };
 
-// ===== WorldState (soma dos slices) =====
+// ===== WorldState =====
 export type WorldState = {
   // blocks.slice
   blocks: Map<string, BlockData>;
@@ -35,7 +35,7 @@ export type WorldState = {
   mode: Mode;
   setMode: (m: Mode) => void;
 
-  // visual-wire.slice (apenas o que usamos)
+  // visual-wire.slice
   showWire: boolean;
   setShowWire: (v: boolean) => void;
 
@@ -70,9 +70,13 @@ export type WorldState = {
   canUndo: () => boolean;
   canRedo: () => boolean;
 
-  // anim.slice (somente flags/efeitos que ainda usamos)
+  // anim.slice
   blockAnimEnabled: boolean;
   setBlockAnimEnabled: (v: boolean) => void;
+  blockAnimDuration: number;
+  setBlockAnimDuration: (v: number) => void;
+  blockAnimBounce: number;
+  setBlockAnimBounce: (v: number) => void;
   effects: {
     id: number;
     pos: Pos;
@@ -96,7 +100,7 @@ export type WorldState = {
   getSnapshot: () => WorldSnapshot;
   loadSnapshot: (snap: WorldSnapshot) => void;
 
-  // env.slice (presets de ambiente)
+  // env.slice
   envPreset: EnvPreset;
   setEnvPreset: (p: EnvPreset) => void;
   cycleEnvPreset: () => void;
@@ -113,8 +117,7 @@ import { createAudioSlice } from "./slices/audio.slice";
 import { createEnvSlice } from "./slices/env.slice";
 import { createVisualWireSlice } from "./slices/visual-wire";
 
-
-// ===== create store (compacto) =====
+// ===== create store =====
 export const useWorld = create<WorldState>()((set, get, api) => {
   const S = {
     ...createBlocksSlice(set, get, api),
@@ -206,9 +209,13 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     canUndo: S.canUndo!,
     canRedo: S.canRedo!,
 
-    // anim (sem duration/bounce legados)
+    // anim
     blockAnimEnabled: S.blockAnimEnabled!,
     setBlockAnimEnabled: S.setBlockAnimEnabled!,
+    blockAnimDuration: S.blockAnimDuration!,
+    setBlockAnimDuration: S.setBlockAnimDuration!,
+    blockAnimBounce: S.blockAnimBounce!,
+    setBlockAnimBounce: S.setBlockAnimBounce!,
     effects: S.effects ?? [],
     addRemoveEffect: S.addRemoveEffect!,
     gcEffects: S.gcEffects!,
@@ -233,28 +240,18 @@ export const useWorld = create<WorldState>()((set, get, api) => {
   };
 });
 
-// ⬇️ Helpers p/ importar mundos JSON (usado no App.tsx)
-type ExternalBlock = {
-  x: number;
-  y: number;
-  z: number;
-  type: BlockType | string;
-};
-
+// === Import helpers (inalterado) ===
+type ExternalBlock = { x: number; y: number; z: number; type: BlockType | string };
 function hasWorld(obj: unknown): obj is { world: { blocks?: ExternalBlock[] } } {
   return !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world;
 }
 function hasBlocks(obj: unknown): obj is { blocks?: ExternalBlock[] } {
   return !!obj && typeof obj === "object" && "blocks" in obj;
 }
-
 function externalToSnapshot(payload: unknown): WorldSnapshot {
   let arr: ExternalBlock[] = [];
-  if (hasWorld(payload) && Array.isArray(payload.world.blocks)) {
-    arr = payload.world.blocks;
-  } else if (hasBlocks(payload) && Array.isArray(payload.blocks)) {
-    arr = payload.blocks;
-  }
+  if (hasWorld(payload) && Array.isArray(payload.world.blocks)) arr = payload.world.blocks;
+  else if (hasBlocks(payload) && Array.isArray(payload.blocks)) arr = payload.blocks;
   const voxels: Voxel[] = arr.map((b) => ({
     x: Number(b.x) | 0,
     y: Number(b.y) | 0,
@@ -263,7 +260,6 @@ function externalToSnapshot(payload: unknown): WorldSnapshot {
   }));
   return { blocks: voxels };
 }
-
 export function importWorld(payload: unknown) {
   const snap = externalToSnapshot(payload);
   useWorld.getState().loadSnapshot(snap);

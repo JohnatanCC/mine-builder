@@ -122,7 +122,7 @@ export const ENV_PRESETS: Record<EnvPreset, {
     ambient: 0.18, hemi: 0.28, hemiSky: "#9fbaff", hemiGround: "#2b2b2b",
   },
   dusk: {
-    skyTop: "#5a7bd6", skyBottom: "#0a0e18",
+    skyTop: "#C4844F", skyBottom: "#0a0e18",
     dirPosition: [0.1, 0.22, 0.38],
     dirColor: "#ffd7a1", dirIntensity: 0.85,
     ambient: 0.15, hemi: 0.22, hemiSky: "#8aa7ff", hemiGround: "#24242a",

@@ -12,7 +12,6 @@ import { clamp } from '@/core/anim';
  */
 export const Highlight: React.FC = () => {
   const adj = useWorld((s) => s.hoveredAdj);
-  const colorMode = useWorld((s) => s.highlightColor); // "black" | "white"
   const visible = !!adj;
 
   const matRef = React.useRef<THREE.LineBasicMaterial>(null!);
@@ -39,7 +38,7 @@ export const Highlight: React.FC = () => {
       <lineSegments geometry={geom}>
         <lineBasicMaterial
           ref={matRef}
-          color={colorMode === 'black' ? '#111' : '#fff'}
+          color="white"
           transparent
           depthWrite={false}
         />
