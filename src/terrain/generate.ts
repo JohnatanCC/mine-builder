@@ -1,6 +1,5 @@
 // NEW: src/terrain/generate.ts
 import type { WorldSnapshot, Voxel } from "@/state/world.store";
-import { key } from "@/core/keys";
 
 export type IslandKind = "mini" | "atoll" | "plateau" | "mesa";
 
