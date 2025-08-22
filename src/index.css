@@ -7,6 +7,12 @@ html, body, #root {
   width: 100%;
   height: 100%;
   margin: 0;
+  background: transparent !important; /* deixa ver o gradiente por trás */
+}
+
+/* 2) se algum wrapper ainda receber bg-background, forçamos transparência no centro: */
+.app-center-bg-transparent {
+  background: transparent !important;
 }
 
 @theme inline {
@@ -119,8 +125,5 @@ html, body, #root {
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

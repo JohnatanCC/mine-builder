@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, BoxSelect } from "lucide-react";
+import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon } from "lucide-react";
 import { PiMouseLeftClickFill, PiMouseRightClickFill } from "react-icons/pi";
 import { useWorld } from "@/state/world.store";
 import type { Mode } from "@/core/types";
@@ -45,20 +45,28 @@ export const ToolsRail: React.FC = () => {
   const canUndo = useWorld(s => s.canUndo());
   const canRedo = useWorld(s => s.canRedo());
 
-  // “Brush” temporário quando Ctrl está pressionado (sem mudar state)
+  const showWire = useWorld(s => s.showWire);
+  const setShowWire = useWorld(s => s.setShowWire);
+
+  const env = useWorld(s => s.envPreset);
+  const cycleEnv = useWorld(s => s.cycleEnvPreset);
+
   const effectiveBrush = isCtrlDown || isMode(mode, "brush");
+
+  const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
+  const envLabel = env === "day" ? "Céu: Dia (alternar)" : env === "dusk" ? "Céu: Tarde (alternar)" : "Céu: Noite (alternar)";
+
 
   const ModeChip: React.FC = () => (
     <div className="mt-1 mb-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none">
-      <span className={`inline-block h-2 w-2 rounded-full ${
-        isMode(mode, "place") ? "bg-emerald-500"
-        : isMode(mode, "delete") ? "bg-rose-500"
-        : "bg-sky-500"
-      }`} />
+      <span className={`inline-block h-2 w-2 rounded-full ${isMode(mode, "place") ? "bg-emerald-500"
+          : isMode(mode, "delete") ? "bg-rose-500"
+            : "bg-sky-500"
+        }`} />
       <span className="uppercase tracking-wide">
         {isMode(mode, "place") ? "Colocar"
           : isMode(mode, "delete") ? "Remover"
-          : "Pincel"}
+            : "Pincel"}
         {isCtrlDown && " (Ctrl)"}
       </span>
     </div>
@@ -111,8 +119,19 @@ export const ToolsRail: React.FC = () => {
 
         <div className="my-2 h-px w-4 bg-border/70" />
 
-        <Tool label="Grade no chão"><Grid3X3 className="h-4 w-4" /></Tool>
-        <Tool label="Seleção (experimentos)"><BoxSelect className="h-4 w-4" /></Tool>
+        {/* ⬇️ Grade/Wireframe: agora alterna o estado global */}
+        <Tool
+          label={showWire ? "Wireframe: ON" : "Wireframe: OFF"}
+          pressed={showWire}
+          onPressedChange={() => setShowWire(!showWire)}
+        >
+          <Grid3X3 className="h-4 w-4" />
+        </Tool>
+
+        {/* ⬇️ Substitui a ferramenta de seleção: alterna Dia/Tarde/Noite */}
+        <Tool label={envLabel} onPressedChange={cycleEnv}>
+          <EnvIcon className="h-4 w-4" />
+        </Tool>
       </div>
     </div>
   );

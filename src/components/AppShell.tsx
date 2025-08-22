@@ -23,9 +23,9 @@ export const AppShell: React.FC<Props> = ({
   const leftW = UI_SHELL.leftWidth;
   const rightW = UI_SHELL.rightWidth;
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className="h-screen w-screen overflow-hidden text-foreground">
       <div
-        className="flex items-center border-b bg-card/60 backdrop-blur-sm"
+        className="flex  items-center bg-background"
         style={{ height: topH }}
       >
         <div className="w-full px-2">{topBar}</div>
@@ -40,7 +40,7 @@ export const AppShell: React.FC<Props> = ({
         <aside className="border-r bg-card">
           <div className="h-full overflow-y-auto">{left}</div>
         </aside>
-        <main className="relative">
+        <main className="app-center-bg-transparent relative h-full w-full">
           {children}
           {toolsOverlay && (
             <div

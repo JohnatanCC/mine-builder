@@ -1,4 +1,4 @@
-// NEW FILE: src/ui/panels/BlockCatalog.tsx
+// UPDATE: src/ui/panels/BlockCatalog.tsx
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { REGISTRY, getLabel } from "@/core/blocks/registry";
@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowUpAZ } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function useAllBlocks(): BlockType[] {
   return useMemo(() => Object.keys(REGISTRY) as BlockType[], []);
@@ -17,13 +23,15 @@ function useAllBlocks(): BlockType[] {
 
 function BlocksGrid({
   items,
+  current,
   onPick,
 }: {
   items: BlockType[];
+  current: BlockType;
   onPick: (t: BlockType) => void;
 }) {
   const SLOT = 65;
-  const GAP = 8;   
+  const GAP = 8;
 
   return (
     <div
@@ -31,29 +39,60 @@ function BlocksGrid({
       style={{
         gridTemplateColumns: `repeat(5, ${SLOT}px)`,
         gap: GAP,
-        padding: "4px 0"
+        padding: "4px 0",
       }}
     >
-      {items.map((t) => (
-        <button
-          key={t}
-          onClick={() => onPick(t)}
-          style={{ width: SLOT, height: SLOT }}
-          title={getLabel(t)}
-          className="relative flex items-center justify-center rounded-lg border bg-muted hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-        >
-          <BlockIcon type={t} size={SLOT - 4} />
-        </button>
-      ))}
+      <TooltipProvider delayDuration={150}>
+        {items.map((t) => {
+          const selected = t === current;
+          return (
+            <Tooltip key={t}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onPick(t)}
+                  aria-label={getLabel(t)}
+                  aria-pressed={selected}
+                  style={{ width: SLOT, height: SLOT }}
+                  className={[
+                    "relative flex items-center justify-center rounded-lg border",
+                    "bg-muted hover:bg-accent hover:text-accent-foreground",
+                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background",
+                    selected
+                      ? "ring-2 ring-primary border-primary/50 bg-primary/10"
+                      : "",
+                  ].join(" ")}
+                >
+                  <BlockIcon type={t} size={SLOT - 4} />
+                  {selected && (
+                    <span
+                      className="pointer-events-none absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground shadow"
+                      title="Selecionado"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {getLabel(t)}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </TooltipProvider>
     </div>
   );
 }
+
 export const BlockCatalog: React.FC = () => {
+  const current = useWorld((s) => s.current);
   const setCurrent = useWorld((s) => s.setCurrent);
+
   const all = useAllBlocks();
   const [tab, setTab] = useState<"blocks" | "decor">("blocks");
   const [q, setQ] = useState("");
   const [alpha, setAlpha] = useState(false);
+
   const source = tab === "blocks" ? all : [];
 
   const filtered = useMemo(() => {
@@ -67,13 +106,9 @@ export const BlockCatalog: React.FC = () => {
     if (alpha) arr = [...arr].sort((a, b) => getLabel(a).localeCompare(getLabel(b)));
     return arr;
   }, [source, q, alpha]);
+
   return (
-    <Card
-      className={[
-        "ml-2 border-0 w-[360px]",
-        "flex h-full flex-col",
-      ].join(" ")}
-    >
+    <Card className={["ml-2 border-0 w-[360px]", "flex h-full flex-col"].join(" ")}>
       <div className="mb-2 flex items-center gap-2">
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
           <TabsList className="h-8">
@@ -108,12 +143,10 @@ export const BlockCatalog: React.FC = () => {
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <Tabs value={tab}>
           <TabsContent value="blocks" className="mt-0 d-flex">
-            <BlocksGrid items={filtered} onPick={setCurrent} />
+            <BlocksGrid items={filtered} current={current} onPick={setCurrent} />
           </TabsContent>
           <TabsContent value="decor" className="mt-0">
-            <div className="text-sm text-muted-foreground">
-              Em breve: itens de decoração.
-            </div>
+            <div className="text-sm text-muted-foreground">Em breve: itens de decoração.</div>
           </TabsContent>
         </Tabs>
       </div>

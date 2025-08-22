@@ -20,6 +20,10 @@ import { RemoveBurst } from "./components/effects/RemoveBurst";
 
 // função de importação já existente
 import { importWorld } from "@/state/world.store";
+import { WireGrid } from "./components/WireGrid";
+import { WireframeAll } from "./components/WireframeAll";
+import * as THREE from "three"; // ⬅️ novo
+import { SkyBackdrop } from "./components/SkyBackdrop";
 
 export default function App() {
   React.useEffect(() => {
@@ -37,18 +41,40 @@ export default function App() {
   return (
     <AppShell
       topBar={<TopBar />}
-      left={<BlockCatalog />}         // catálogo fixo
-      right={<Inspector />}           // inspector
-      toolsOverlay={<ToolsRail />}    // ferramentas absolutas
+      left={<BlockCatalog />}
+      right={<Inspector />}
+      toolsOverlay={<ToolsRail />}
     >
-      <Canvas camera={{ position: [12, 12, 12], fov: 50 }}>
-        <Lights />
-        <CameraControls />
-        <World />
-        <Ground />
-        <Highlight />
-        <RemoveBurst />
-      </Canvas>
+      <div className="relative h-full w-full bg-transparent">
+        {/* Gradiente CSS por trás do Canvas */}
+        <SkyBackdrop />
+        <Canvas
+          gl={{ antialias: true, alpha: true }} // ⬅️ permite ver o gradiente de trás
+          shadows
+          dpr={[1, 1.5]}
+          camera={{ position: [50, 20, 40], fov: 30 }}
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0);          // transparente
+            gl.shadowMap.enabled = true;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.0;
+          }}
+        >
+          {/* Opcional: se preferir o céu 3D, descomente: */}
+          {/* <SkyDome top="#7ec8ff" bottom="#0b0f1a" /> */}
+          <CameraControls />
+          <Highlight />
+          <Lights />
+          <World />
+          <Ground />
+          <RemoveBurst />
+          <WireGrid />
+          <WireframeAll />
+        </Canvas>
+        
+      </div>
 
       <FpsMeter />
       <CommandMenu /> {/* Ctrl+K */}
