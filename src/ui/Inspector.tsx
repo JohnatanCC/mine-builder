@@ -16,13 +16,10 @@ import { loadSlot, saveSlot, clearSlot, listSlots, saveAuto, loadAuto, applySnap
 import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-// ⬇️ imports para a seção de Áudio
 import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { TerrainPanel } from "./TerrainPanel";
 
 /* ----------------- UI helpers ----------------- */
 const Row: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
@@ -286,12 +283,12 @@ export const Inspector: React.FC = () => {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="terrain">
+          {/* <AccordionItem value="terrain">
             <AccordionTrigger>Terreno</AccordionTrigger>
             <AccordionContent className="pt-0">
               <TerrainPanel />
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
 
           {/* Mundo / Slots */}
           <AccordionItem value="slots">
