@@ -1,9 +1,25 @@
+// UPDATE: src/state/world.store.ts
 import { create } from "zustand";
-import type { BlockType, BlockData, Mode, Pos, CameraMode } from "../core/types";
+import type {
+  BlockType,
+  BlockData,
+  Mode,
+  Pos,
+  CameraMode,
+} from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
+import { key as makeKey, parseKey } from "../core/keys";
 
-// WorldState central apenas para tipagem (soma das chaves dos slices)
+// ===== Snapshot types =====
+export type Voxel = { x: number; y: number; z: number; type: BlockType };
+export type WorldSnapshot = {
+  seed?: number;
+  blocks: Voxel[];
+  // futuras props (luz, vento etc.)
+};
+
+// ===== WorldState (soma dos slices) =====
 export type WorldState = {
   // blocks.slice
   blocks: Map<string, BlockData>;
@@ -20,157 +36,286 @@ export type WorldState = {
   setMode: (m: Mode) => void;
 
   // visual.slice
-  showWire: boolean; setShowWire: (v: boolean) => void;
-  highlightColor: "black" | "white"; setHighlightColor: (c: "black" | "white") => void;
-  fogEnabled: boolean; setFogEnabled: (v: boolean) => void;
-  fogDensity: number; setFogDensity: (v: number) => void;
-  lightAnimate: boolean; setLightAnimate: (v: boolean) => void;
-  lightSpeed: number; setLightSpeed: (v: number) => void;
-  lightIntensity: number; setLightIntensity: (v: number) => void;
-  foliageMode: "block" | "cross2" | "cross3"; setFoliageMode: (m: "block" | "cross2" | "cross3") => void;
-  leavesDensity: number; setLeavesDensity: (v: number) => void;
-  leavesScale: number; setLeavesScale: (v: number) => void;
-  windEnabled: boolean; setWindEnabled: (v: boolean) => void;
-  windStrength: number; setWindStrength: (v: number) => void;
-  windSpeed: number; setWindSpeed: (v: number) => void;
+  showWire: boolean;
+  setShowWire: (v: boolean) => void;
+  highlightColor: "black" | "white";
+  setHighlightColor: (c: "black" | "white") => void;
+  fogEnabled: boolean;
+  setFogEnabled: (v: boolean) => void;
+  fogDensity: number;
+  setFogDensity: (v: number) => void;
+  lightAnimate: boolean;
+  setLightAnimate: (v: boolean) => void;
+  lightSpeed: number;
+  setLightSpeed: (v: number) => void;
+  lightIntensity: number;
+  setLightIntensity: (v: number) => void;
+  foliageMode: "block" | "cross2" | "cross3";
+  setFoliageMode: (m: "block" | "cross2" | "cross3") => void;
+  leavesDensity: number;
+  setLeavesDensity: (v: number) => void;
+  leavesScale: number;
+  setLeavesScale: (v: number) => void;
+  windEnabled: boolean;
+  setWindEnabled: (v: boolean) => void;
+  windStrength: number;
+  setWindStrength: (v: number) => void;
+  windSpeed: number;
+  setWindSpeed: (v: number) => void;
 
   // input.slice
-  hoveredKey?: string | null; setHoveredKey: (k?: string | null) => void;
-  hoveredAdj: Pos | null; setHoveredAdj: (p: Pos | null) => void;
-  mouse: { x: number; y: number }; setMouse: (x: number, y: number) => void;
-  lastActionAt: number; setLastActionAt: (t: number) => void;
-  isCtrlDown: boolean; setCtrlDown: (v: boolean) => void;
+  hoveredKey?: string | null;
+  setHoveredKey: (k?: string | null) => void;
+  hoveredAdj: Pos | null;
+  setHoveredAdj: (p: Pos | null) => void;
+  mouse: { x: number; y: number };
+  setMouse: (x: number, y: number) => void;
+  lastActionAt: number;
+  setLastActionAt: (t: number) => void;
+  isCtrlDown: boolean;
+  setCtrlDown: (v: boolean) => void;
 
   // ui.slice
-  showFps: boolean; setShowFps: (v: boolean) => void;
-  showHelp: boolean; setShowHelp: (v: boolean) => void;
-  cameraMode: CameraMode; setCameraMode: (m: CameraMode) => void;
+  showFps: boolean;
+  setShowFps: (v: boolean) => void;
+  showHelp: boolean;
+  setShowHelp: (v: boolean) => void;
+  cameraMode: CameraMode;
+  setCameraMode: (m: CameraMode) => void;
 
   // history.slice
-  past: HistoryItem[]; future: HistoryItem[]; currentStroke: HistoryOp[] | null;
-  beginStroke: () => void; endStroke: () => void;
-  undo: () => void; redo: () => void;
-  canUndo: () => boolean; canRedo: () => boolean;
+  past: HistoryItem[];
+  future: HistoryItem[];
+  currentStroke: HistoryOp[] | null;
+  beginStroke: () => void;
+  endStroke: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
 
   // anim.slice
-  blockAnimEnabled: boolean; setBlockAnimEnabled: (v: boolean) => void;
-  blockAnimDuration: number; setBlockAnimDuration: (v: number) => void;
-  blockAnimBounce: number; setBlockAnimBounce: (v: number) => void;
-  effects: { id: number; pos: Pos; type: BlockType; t0: number; duration: number }[];
+  blockAnimEnabled: boolean;
+  setBlockAnimEnabled: (v: boolean) => void;
+  blockAnimDuration: number;
+  setBlockAnimDuration: (v: number) => void;
+  blockAnimBounce: number;
+  setBlockAnimBounce: (v: number) => void;
+  effects: {
+    id: number;
+    pos: Pos;
+    type: BlockType;
+    t0: number;
+    duration: number;
+  }[];
   addRemoveEffect: (pos: Pos, type: BlockType, duration?: number) => void;
   gcEffects: () => void;
 
   // audio.slice
-  audioEnabled: boolean; setAudioEnabled: (v: boolean) => void;
-  audioVolume: number; setAudioVolume: (v: number) => void;
-  audioTracks: AmbientId[]; currentTrack: AmbientId; setCurrentTrack: (id: AmbientId) => void;
+  audioEnabled: boolean;
+  setAudioEnabled: (v: boolean) => void;
+  audioVolume: number;
+  setAudioVolume: (v: number) => void;
+  audioTracks: AmbientId[];
+  currentTrack: AmbientId;
+  setCurrentTrack: (id: AmbientId) => void;
+
+  // NEW: snapshot API
+  getSnapshot: () => WorldSnapshot;
+  loadSnapshot: (snap: WorldSnapshot) => void;
 };
 
-// importar e combinar os slices
-import { createBlocksSlice }   from "./slices/blocks.slice";
+// ===== importar slices =====
+import { createBlocksSlice } from "./slices/blocks.slice";
 import { createSelectionSlice } from "./slices/selection.slice";
-import { createVisualSlice }    from "./slices/visual.slice";
-import { createInputSlice }     from "./slices/input.slice";
-import { createUISlice }        from "./slices/ui.slice";
-import { createHistorySlice }   from "./slices/history.slice";
-import { createAnimSlice }      from "./slices/anim.slice";
-import { createAudioSlice }     from "./slices/audio.slice";
+import { createVisualSlice } from "./slices/visual.slice";
+import { createInputSlice } from "./slices/input.slice";
+import { createUISlice } from "./slices/ui.slice";
+import { createHistorySlice } from "./slices/history.slice";
+import { createAnimSlice } from "./slices/anim.slice";
+import { createAudioSlice } from "./slices/audio.slice";
 
-export const useWorld = create<WorldState>()((...a) => {
-  const blocksSlice = createBlocksSlice(...a);
-  const selectionSlice = createSelectionSlice(...a);
-  const visualSlice = createVisualSlice(...a);
-  const inputSlice = createInputSlice(...a);
-  const uiSlice = createUISlice(...a);
-  const historySlice = createHistorySlice(...a);
-  const animSlice = createAnimSlice(...a);
-  const audioSlice = createAudioSlice(...a);
+// ===== create store (compacto) =====
+export const useWorld = create<WorldState>()((set, get, api) => {
+  const S = {
+    ...createBlocksSlice(set, get, api),
+    ...createSelectionSlice(set, get, api),
+    ...createVisualSlice(set, get, api),
+    ...createInputSlice(set, get, api),
+    ...createUISlice(set, get, api),
+    ...createHistorySlice(set, get, api),
+    ...createAnimSlice(set, get, api),
+    ...createAudioSlice(set, get, api),
+  } as Partial<WorldState> & Record<string, any>;
+
+  const safeBlocks = S.blocks ?? new Map<string, BlockData>();
+
+  // === Snapshot API ===
+  const getSnapshot = (): WorldSnapshot => {
+    const voxels: Voxel[] = [];
+    const blocks = get().blocks ?? safeBlocks;
+
+    for (const [k, data] of blocks.entries()) {
+      const [x, y, z] = parseKey(k); // Pos = [x,y,z]
+      voxels.push({ x, y, z, type: (data as BlockData).type });
+    }
+    return { blocks: voxels };
+  };
+
+  const loadSnapshot = (snap: WorldSnapshot) => {
+    if (!snap || !Array.isArray(snap.blocks)) return;
+
+    // Recria o Map de forma imutável
+    const next = new Map<string, BlockData>();
+    for (const v of snap.blocks) {
+      next.set(makeKey(v.x, v.y, v.z), { type: v.type } as BlockData);
+    }
+
+    // ✅ zustand set(): apenas 1-2 args (sem label) e merge parcial
+    set({
+      blocks: next,
+      effects: [],
+      past: [],
+      future: [],
+      currentStroke: null,
+    });
+  };
 
   return {
-    // Ensure all required properties are always defined
-    blocks: blocksSlice.blocks ?? new Map<string, BlockData>(),
-    setBlock: blocksSlice.setBlock!,
-    removeBlock: blocksSlice.removeBlock!,
-    hasBlock: blocksSlice.hasBlock!,
-    setBlockSilent: blocksSlice.setBlockSilent!,
-    removeBlockSilent: blocksSlice.removeBlockSilent!,
+    blocks: safeBlocks,
+    setBlock: S.setBlock!,
+    removeBlock: S.removeBlock!,
+    hasBlock: S.hasBlock!,
+    setBlockSilent: S.setBlockSilent!,
+    removeBlockSilent: S.removeBlockSilent!,
 
-    current: selectionSlice.current!,
-    setCurrent: selectionSlice.setCurrent!,
-    mode: selectionSlice.mode!,
-    setMode: selectionSlice.setMode!,
+    current: S.current!,
+    setCurrent: S.setCurrent!,
+    mode: S.mode!,
+    setMode: S.setMode!,
 
-    showWire: visualSlice.showWire!,
-    setShowWire: visualSlice.setShowWire!,
-    highlightColor: visualSlice.highlightColor!,
-    setHighlightColor: visualSlice.setHighlightColor!,
-    fogEnabled: visualSlice.fogEnabled!,
-    setFogEnabled: visualSlice.setFogEnabled!,
-    fogDensity: visualSlice.fogDensity!,
-    setFogDensity: visualSlice.setFogDensity!,
-    lightAnimate: visualSlice.lightAnimate!,
-    setLightAnimate: visualSlice.setLightAnimate!,
-    lightSpeed: visualSlice.lightSpeed!,
-    setLightSpeed: visualSlice.setLightSpeed!,
-    lightIntensity: visualSlice.lightIntensity!,
-    setLightIntensity: visualSlice.setLightIntensity!,
-    foliageMode: visualSlice.foliageMode!,
-    setFoliageMode: visualSlice.setFoliageMode!,
-    leavesDensity: visualSlice.leavesDensity!,
-    setLeavesDensity: visualSlice.setLeavesDensity!,
-    leavesScale: visualSlice.leavesScale!,
-    setLeavesScale: visualSlice.setLeavesScale!,
-    windEnabled: visualSlice.windEnabled!,
-    setWindEnabled: visualSlice.setWindEnabled!,
-    windStrength: visualSlice.windStrength!,
-    setWindStrength: visualSlice.setWindStrength!,
-    windSpeed: visualSlice.windSpeed!,
-    setWindSpeed: visualSlice.setWindSpeed!,
+    showWire: S.showWire!,
+    setShowWire: S.setShowWire!,
+    highlightColor: S.highlightColor!,
+    setHighlightColor: S.setHighlightColor!,
+    fogEnabled: S.fogEnabled!,
+    setFogEnabled: S.setFogEnabled!,
+    fogDensity: S.fogDensity!,
+    setFogDensity: S.setFogDensity!,
+    lightAnimate: S.lightAnimate!,
+    setLightAnimate: S.setLightAnimate!,
+    lightSpeed: S.lightSpeed!,
+    setLightSpeed: S.setLightSpeed!,
+    lightIntensity: S.lightIntensity!,
+    setLightIntensity: S.setLightIntensity!,
+    foliageMode: S.foliageMode!,
+    setFoliageMode: S.setFoliageMode!,
+    leavesDensity: S.leavesDensity!,
+    setLeavesDensity: S.setLeavesDensity!,
+    leavesScale: S.leavesScale!,
+    setLeavesScale: S.setLeavesScale!,
+    windEnabled: S.windEnabled!,
+    setWindEnabled: S.setWindEnabled!,
+    windStrength: S.windStrength!,
+    setWindStrength: S.setWindStrength!,
+    windSpeed: S.windSpeed!,
+    setWindSpeed: S.setWindSpeed!,
 
-    hoveredKey: inputSlice.hoveredKey,
-    setHoveredKey: inputSlice.setHoveredKey!,
-    hoveredAdj: inputSlice.hoveredAdj!,
-    setHoveredAdj: inputSlice.setHoveredAdj!,
-    mouse: inputSlice.mouse!,
-    setMouse: inputSlice.setMouse!,
-    lastActionAt: inputSlice.lastActionAt!,
-    setLastActionAt: inputSlice.setLastActionAt!,
-    isCtrlDown: inputSlice.isCtrlDown!,
-    setCtrlDown: inputSlice.setCtrlDown!,
+    hoveredKey: S.hoveredKey,
+    setHoveredKey: S.setHoveredKey!,
+    hoveredAdj: S.hoveredAdj!,
+    setHoveredAdj: S.setHoveredAdj!,
+    mouse: S.mouse!,
+    setMouse: S.setMouse!,
+    lastActionAt: S.lastActionAt!,
+    setLastActionAt: S.setLastActionAt!,
+    isCtrlDown: S.isCtrlDown!,
+    setCtrlDown: S.setCtrlDown!,
 
-    showFps: uiSlice.showFps!,
-    setShowFps: uiSlice.setShowFps!,
-    showHelp: uiSlice.showHelp!,
-    setShowHelp: uiSlice.setShowHelp!,
-    cameraMode: uiSlice.cameraMode!,
-    setCameraMode: uiSlice.setCameraMode!,
+    showFps: S.showFps!,
+    setShowFps: S.setShowFps!,
+    showHelp: S.showHelp!,
+    setShowHelp: S.setShowHelp!,
+    cameraMode: S.cameraMode!,
+    setCameraMode: S.setCameraMode!,
 
-    past: historySlice.past!,
-    future: historySlice.future!,
-    currentStroke: historySlice.currentStroke!,
-    beginStroke: historySlice.beginStroke!,
-    endStroke: historySlice.endStroke!,
-    undo: historySlice.undo!,
-    redo: historySlice.redo!,
-    canUndo: historySlice.canUndo!,
-    canRedo: historySlice.canRedo!,
+    past: S.past!,
+    future: S.future!,
+    currentStroke: S.currentStroke!,
+    beginStroke: S.beginStroke!,
+    endStroke: S.endStroke!,
+    undo: S.undo!,
+    redo: S.redo!,
+    canUndo: S.canUndo!,
+    canRedo: S.canRedo!,
 
-    blockAnimEnabled: animSlice.blockAnimEnabled!,
-    setBlockAnimEnabled: animSlice.setBlockAnimEnabled!,
-    blockAnimDuration: animSlice.blockAnimDuration!,
-    setBlockAnimDuration: animSlice.setBlockAnimDuration!,
-    blockAnimBounce: animSlice.blockAnimBounce!,
-    setBlockAnimBounce: animSlice.setBlockAnimBounce!,
-    effects: animSlice.effects!,
-    addRemoveEffect: animSlice.addRemoveEffect!,
-    gcEffects: animSlice.gcEffects!,
+    blockAnimEnabled: S.blockAnimEnabled!,
+    setBlockAnimEnabled: S.setBlockAnimEnabled!,
+    blockAnimDuration: S.blockAnimDuration!,
+    setBlockAnimDuration: S.setBlockAnimDuration!,
+    blockAnimBounce: S.blockAnimBounce!,
+    setBlockAnimBounce: S.setBlockAnimBounce!,
+    effects: S.effects ?? [],
+    addRemoveEffect: S.addRemoveEffect!,
+    gcEffects: S.gcEffects!,
 
-    audioEnabled: audioSlice.audioEnabled!,
-    setAudioEnabled: audioSlice.setAudioEnabled!,
-    audioVolume: audioSlice.audioVolume!,
-    setAudioVolume: audioSlice.setAudioVolume!,
-    audioTracks: audioSlice.audioTracks!,
-    currentTrack: audioSlice.currentTrack!,
-    setCurrentTrack: audioSlice.setCurrentTrack!,
+    audioEnabled: S.audioEnabled!,
+    setAudioEnabled: S.setAudioEnabled!,
+    audioVolume: S.audioVolume!,
+    setAudioVolume: S.setAudioVolume!,
+    audioTracks: S.audioTracks!,
+    currentTrack: S.currentTrack!,
+    setCurrentTrack: S.setCurrentTrack!,
+
+    // === snapshot API ===
+    getSnapshot,
+    loadSnapshot,
   };
 });
+
+// ⬇️⬇️ NOVO: helper para importar mundos em JSON (usado no App.tsx)
+type ExternalBlock = {
+  x: number;
+  y: number;
+  z: number;
+  type: BlockType | string;
+};
+
+// Guards para estreitar o tipo de payload
+function hasWorld(
+  obj: unknown
+): obj is { world: { blocks?: ExternalBlock[] } } {
+  return (
+    !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world
+  );
+}
+function hasBlocks(obj: unknown): obj is { blocks?: ExternalBlock[] } {
+  return !!obj && typeof obj === "object" && "blocks" in obj;
+}
+
+/** Converte JSON externo para o WorldSnapshot canônico */
+function externalToSnapshot(payload: unknown): WorldSnapshot {
+  let arr: ExternalBlock[] = [];
+
+  if (hasWorld(payload) && Array.isArray(payload.world.blocks)) {
+    arr = payload.world.blocks;
+  } else if (hasBlocks(payload) && Array.isArray(payload.blocks)) {
+    arr = payload.blocks;
+  }
+
+  const voxels: Voxel[] = arr.map((b) => ({
+    x: Number(b.x) | 0,
+    y: Number(b.y) | 0,
+    z: Number(b.z) | 0,
+    // confiamos no pipeline para fornecer tipos válidos; se quiser, valide aqui
+    type: b.type as BlockType,
+  }));
+
+  return { blocks: voxels };
+}
+
+/** Importa um mundo exportado (JSON) para o estado */
+export function importWorld(payload: unknown) {
+  const snap = externalToSnapshot(payload);
+  useWorld.getState().loadSnapshot(snap);
+}

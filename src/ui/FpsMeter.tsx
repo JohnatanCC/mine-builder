@@ -34,7 +34,7 @@ export default function FpsMeter() {
         top: 10,
         right: 10,
         padding: "4px 8px",
-        background: "rgba(0,0,0,0.5)",
+        background: "rgba(4, 49, 19, 0.836)",
         color: "#0f0",
         fontSize: "14px",
         fontFamily: "monospace",

@@ -5,9 +5,28 @@ import { useWorld } from "../state/world.store";
 import { getMaterialFor } from "../core/materials";
 import type { BlockType } from "../core/types";
 
-function cloneMaterialDeep(mat: THREE.Material | THREE.Material[]) {
-    if (Array.isArray(mat)) return mat.map((m) => m.clone());
-    return mat.clone();
+/** Clona material(ais) e garante flags de transparência controláveis */
+function cloneAndPrepareMaterial(mat: THREE.Material | THREE.Material[]) {
+    const prep = (m: THREE.Material) => {
+        const ms = m as THREE.MeshStandardMaterial;
+        ms.transparent = true;
+        ms.opacity = 1;
+        ms.depthWrite = true; // mantém profundidade, evita ver "através" do burst
+        return ms;
+    };
+
+    if (Array.isArray(mat)) return mat.map((m) => prep(m.clone()));
+    return prep(mat.clone());
+}
+
+/** Dispose seguro para material(ais) clonados */
+function disposeMaterialDeep(mat: THREE.Material | THREE.Material[] | null) {
+    if (!mat) return;
+    if (Array.isArray(mat)) {
+        mat.forEach((m) => m.dispose());
+    } else {
+        mat.dispose();
+    }
 }
 
 export function EffectsLayer() {
@@ -21,7 +40,13 @@ export function EffectsLayer() {
     return (
         <>
             {effects.map((e) => (
-                <RemoveBurst key={e.id} type={e.type} pos={e.pos} t0={e.t0} duration={e.duration} />
+                <RemoveBurst
+                    key={e.id}
+                    type={e.type}
+                    pos={e.pos}
+                    t0={e.t0}
+                    duration={e.duration}
+                />
             ))}
         </>
     );
@@ -42,41 +67,38 @@ function RemoveBurst({
     t0: number;
     duration: number;
 }) {
-    const materialRef = React.useRef<THREE.Material | THREE.Material[] | null>(null);
     const meshRef = React.useRef<THREE.Mesh>(null!);
 
-    if (!materialRef.current) {
+    // Cria os materiais clonados UMA vez por burst
+    const material = React.useMemo(() => {
         const base = getMaterialFor(type);
-        const cloned = cloneMaterialDeep(base);
-        // garante transparência controlável
-        const setTransp = (m: THREE.Material) => {
-            const ms = m as THREE.MeshStandardMaterial;
-            ms.transparent = true;
-            ms.opacity = 1;
-            ms.depthWrite = true;
-        };
-        if (Array.isArray(cloned)) cloned.forEach(setTransp);
-        else setTransp(cloned as THREE.MeshStandardMaterial);
-        materialRef.current = cloned;
-    }
+        return cloneAndPrepareMaterial(base);
+    }, [type]);
 
+    // Dispose no unmount → evita vazamento de materiais clonados
+    React.useEffect(() => {
+        return () => disposeMaterialDeep(material);
+    }, [material]);
+
+    // Anima scale/opacity no intervalo [t0, t0+duration]
     useFrame(() => {
         const now = performance.now();
-        const t = Math.min(1, (now - t0) / duration);
+        const t = Math.min(1, (now - t0) / duration); // 0..1
         const k = 1 - easeOutQuad(t); // 1→0
+
         if (meshRef.current) {
-            meshRef.current.scale.setScalar(0.2 + 0.8 * k); // 1→0
+            meshRef.current.scale.setScalar(0.2 + 0.8 * k);
         }
+
         const setOpacity = (m: THREE.Material) => {
-            const ms = m as THREE.MeshStandardMaterial;
-            ms.opacity = k;
+            (m as THREE.MeshStandardMaterial).opacity = k;
         };
-        if (Array.isArray(materialRef.current)) materialRef.current.forEach(setOpacity);
-        else setOpacity(materialRef.current as THREE.MeshStandardMaterial);
+        if (Array.isArray(material)) material.forEach(setOpacity);
+        else setOpacity(material);
     });
 
     return (
-        <mesh ref={meshRef} position={pos} material={materialRef.current as any}>
+        <mesh ref={meshRef} position={pos} material={material as any}>
             <boxGeometry args={[1, 1, 1]} />
         </mesh>
     );

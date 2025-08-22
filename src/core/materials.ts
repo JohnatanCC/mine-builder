@@ -1,40 +1,63 @@
-// src/core/materials.ts
+// UPDATE: src/core/materials.ts
 import * as THREE from 'three';
 import type { BlockType } from './types';
-import { getBlockTextures } from '../textures';
+// ❌ removido: atlas procedural antigo
+// import { getBlockTextures } from '../textures';
 import { getMaterialForFromRegistry } from './blocks/registry';
 
+const COMMON: Pick<THREE.MeshStandardMaterialParameters, 'roughness' | 'metalness'> = {
+  roughness: 1,
+  metalness: 0,
+};
+
+const COLOR: Partial<Record<BlockType, number>> = {
+  // básicos
+  stone: 0x888888,
+  stone_brick: 0x7f7f7f,
+  cobblestone: 0x757575,
+  dirt: 0x6f472d,
+  grass: 0x56a73e,
+
+  // madeira/pranchas
+  oak_planks: 0xb0703c,
+  spruce_planks: 0x7a5732,
+  birch_planks: 0xdbcfa4,
+
+  // troncos (cor média)
+  oak_log: 0x9a6a3a,
+  spruce_log: 0x6b4e2a,
+  birch_log: 0xdedcc8,
+
+  // folhas
+  oak_leaves: 0x3f8f3f,
+  spruce_leaves: 0x3a7540,
+  birch_leaves: 0x6ec26d,
+
+  // vidro
+  glass: 0xaed4ff,
+
+  brick: 0xb74f3c
+
+};
+
+function solidColor(hex: number, extra?: Partial<THREE.MeshStandardMaterialParameters>) {
+  return new THREE.MeshStandardMaterial({ color: hex, ...COMMON, ...extra });
+}
+
 export function getMaterialFor(type: BlockType): THREE.Material | THREE.Material[] {
-  
-  const tex = getBlockTextures();
-  const common = { roughness: 1, metalness: 0 };
-  const solid = (map: THREE.Texture, extra?: Partial<THREE.MeshStandardMaterialParameters>) =>
-    new THREE.MeshStandardMaterial({ ...common, map, ...extra });
+  // 1) Tenta pegar de um registry (ex.: itens especiais/procedurais)
+  const reg = getMaterialForFromRegistry(type);
+  if (reg) return reg;
 
-  if (type === 'glass') return solid(tex.glass, { transparent: true, opacity: 0.55, envMapIntensity: 0.25 });
-  if (type === 'stone') return solid(tex.stone);
-  if (type === 'grass') {
-    return [
-      solid(tex.grassSide), solid(tex.grassSide),
-      solid(tex.grassTop),  solid(tex.dirt),
-      solid(tex.grassSide), solid(tex.grassSide),
-    ];
+  // 2) Fallback por cor — simples, síncrono e estável
+  //    (o Block ainda aplica ajustes de transparência para glass/folhas)
+  const hex = COLOR[type] ?? 0x9c9c9c;
+
+  if (type === 'glass') {
+    // leve transparência; o Block faz fine-tune (depthWrite/opacity) depois
+    return solidColor(hex, { transparent: true, opacity: 0.55, envMapIntensity: 0.25 });
   }
-  if (type === 'dirt') return solid(tex.dirt);
-  if (type === 'stone_brick') return solid(tex.stoneBricks);
-  if (type === 'cobblestone') return solid(tex.cobblestone);
-  if (type === 'oak_planks') return solid(tex.oak);
-  if (type === 'spruce_planks') return solid(tex.sprucePlanks);
-  if (type === 'birch_planks') return solid(tex.birchPlanks);
 
-  const logFaces = (bark: THREE.Texture, rings: THREE.Texture) =>
-    [solid(bark), solid(bark), solid(rings), solid(rings), solid(bark), solid(bark)] as THREE.Material[];
-  if (type === 'oak_log') return logFaces(tex.oakBark, tex.oakRings);
-  if (type === 'spruce_log') return logFaces(tex.spruceBark, tex.spruceRings);
-  if (type === 'birch_log') return logFaces(tex.birchBark, tex.birchRings);
-
-  // legacy
-  if (type === 'oak') return solid(tex.oak);
-
-  return getMaterialForFromRegistry(type);
+  // Para a maioria dos blocos retornamos um material único (todas as faces)
+  return solidColor(hex);
 }

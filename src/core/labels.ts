@@ -1,7 +1,6 @@
 import type { BlockType } from "./types";
 
 export const BLOCK_LABEL: Record<BlockType, string> = {
-  oak: "Carvalho (legacy)",
   stone: "Pedra",
   glass: "Vidro",
   grass: "Grama",
@@ -17,4 +16,6 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   oak_leaves: "Folhas Carvalho",
   spruce_leaves: "Folhas Pinheiro",
   birch_leaves: "Folhas Bétula",
+  brick: "Tijolos",
+  white_concrete: "Concreto Branco",
 };
