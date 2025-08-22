@@ -1,6 +1,5 @@
 // UPDATE: src/App.tsx
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 
 import { World } from "./components/World";
 import { Ground } from "./components/Ground";
@@ -14,6 +13,9 @@ import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
 import { ToolsRail } from "./ui/ToolsRail";
 import { AmbientAudio } from "./components/AmbientAudio";
+import { Keybinds } from "./components/Keybinds";
+import { CameraControls } from "./components/CameraControls";
+import { RemoveBurst } from "./components/effects/RemoveBurst";
 export default function App() {
   return (
     <AppShell
@@ -21,20 +23,23 @@ export default function App() {
       left={<BlockCatalog />}         // catálogo fixo
       right={<Inspector />}           // inspector
       toolsOverlay={<ToolsRail />}    // ferramentas absolutas
-      // bottom={<HotbarDock />}         // hotbar acoplada ao rodapé
+    // bottom={<HotbarDock />}         // hotbar acoplada ao rodapé
     >
+
       <Canvas camera={{ position: [12, 12, 12], fov: 50 }}>
         <Lights />
-        <OrbitControls makeDefault />
+        <CameraControls />
         <World />
         <Ground />
         <Highlight />
+        <RemoveBurst />
       </Canvas>
 
       {/* <LoadingOverlay/> */}
       <FpsMeter />
       <CommandMenu /> {/* NEW: Ctrl+K */}
       <AmbientAudio />
+      <Keybinds />
     </AppShell>
   );
 }

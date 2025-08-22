@@ -36,8 +36,8 @@ const COLOR: Partial<Record<BlockType, number>> = {
   // vidro
   glass: 0xaed4ff,
 
-  // legado
-  oak: 0xb0703c,
+  brick: 0xb74f3c
+
 };
 
 function solidColor(hex: number, extra?: Partial<THREE.MeshStandardMaterialParameters>) {

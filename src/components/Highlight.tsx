@@ -1,18 +1,49 @@
+// NEW FILE: src/components/Highlight.tsx
+import * as React from 'react';
 import * as THREE from 'three';
-import { useWorld } from '../state/world.store';
-import { parseKey } from '../core/keys';
+import { useFrame } from '@react-three/fiber';
+import { useWorld } from '@/state/world.store';
+import { ANIM } from '@/core/constants';
+import { clamp } from '@/core/anim';
 
-const BOX_GEOM = new THREE.BoxGeometry(1.001, 1.001, 1.001);
-const EDGE_GEOM = new THREE.EdgesGeometry(BOX_GEOM);
-const EDGE_MAT_WHITE = new THREE.LineBasicMaterial({ color: '#fff' });
-const EDGE_MAT_BLACK = new THREE.LineBasicMaterial({ color: '#000' });
+/**
+ * Ghost/Highlight da posição alvo (hoveredAdj).
+ * Não raycasteia: apenas renderiza de acordo com o estado global.
+ */
+export const Highlight: React.FC = () => {
+  const adj = useWorld((s) => s.hoveredAdj);
+  const colorMode = useWorld((s) => s.highlightColor); // "black" | "white"
+  const visible = !!adj;
 
-export function Highlight() {
-  const hoveredKey = useWorld(s => s.hoveredKey);
-  const highlightColor = useWorld(s => s.highlightColor);
-  const blocks = useWorld(s => s.blocks);
-  if (!hoveredKey || !blocks.has(hoveredKey)) return null;
-  const p = parseKey(hoveredKey);
-  const mat = highlightColor === 'white' ? EDGE_MAT_WHITE : EDGE_MAT_BLACK;
-  return <lineSegments position={p as unknown as THREE.Vector3} geometry={EDGE_GEOM} material={mat} />;
-}
+  const matRef = React.useRef<THREE.LineBasicMaterial>(null!);
+  const grpRef = React.useRef<THREE.Group>(null!);
+
+  // wireframe de um cubo (linhas)
+  const geom = React.useMemo(() => {
+    const g = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.02, 1.02, 1.02));
+    return g;
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (!matRef.current || !grpRef.current) return;
+    // Pulso sutil (alpha) —  sin²
+    const t = clock.getElapsedTime() * ANIM.hover.pulseSpeed * Math.PI;
+    const a = ANIM.hover.min + (ANIM.hover.max - ANIM.hover.min) * (0.5 * (1 + Math.sin(t)));
+    matRef.current.opacity = clamp(a, 0, 1);
+    grpRef.current.visible = visible;
+    if (adj) grpRef.current.position.set(adj[0], adj[1], adj[2]);
+  });
+
+  return (
+    <group ref={grpRef} visible={false}>
+      <lineSegments geometry={geom}>
+        <lineBasicMaterial
+          ref={matRef}
+          color={colorMode === 'black' ? '#111' : '#fff'}
+          transparent
+          depthWrite={false}
+        />
+      </lineSegments>
+    </group>
+  );
+};

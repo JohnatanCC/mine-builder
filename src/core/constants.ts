@@ -73,3 +73,34 @@ export const TINT_LEAVES = LEAF_TINTS.oak_leaves;
 
 /** ⚠️ DEPRECATED: grama não é mais tingida. Mantido apenas por compat. */
 export const TINT_GRASS = undefined as unknown as string;
+
+// UPDATE: src/core/constants.ts
+export const ANIM = {
+  // Duração única base de voxel (ms)
+  duration: 320,
+
+  // Entrada do bloco (sutil)
+  place: {
+    rotMax: Math.PI * 0.35,  // ~63°
+    scaleStart: 0.88,        // nasce quase no final
+    riseFactor: 0.35,        // fração do "rise" da saída
+  },
+
+  // Saída (ghost que sobe e encolhe)
+  remove: {
+    rise: 0.25,
+  },
+
+  // Highlight/ghost de mira
+  hover: {
+    pulseSpeed: 2.2,  // Hz (ciclos/seg)
+    min: 0.15,
+    max: 0.45,
+  },
+
+  // UI (botões, toggles)
+  ui: {
+    pressScale: 0.96,
+    durationMs: 140,
+  },
+} as const;
