@@ -1,13 +1,8 @@
 // src/components/Ground.tsx
 import * as React from "react";
 import { useWorld } from "../state/world.store";
-import { GROUND_SIZE } from "../core/types";
+import { GROUND_SIZE } from "@/core/constants";
 
-/**
- * Semeia a camada de grama em y=0 de forma ADITIVA.
- * Preenche todo o range [0..GROUND_SIZE-1] x [0..GROUND_SIZE-1] apenas uma vez.
- * Nunca sobrescreve blocos existentes.
- */
 export function Ground() {
   const setBlockSilent = useWorld((s) => s.setBlockSilent);
   const hasBlock       = useWorld((s) => s.hasBlock);

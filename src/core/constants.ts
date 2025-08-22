@@ -1,3 +1,5 @@
+import type { EnvPreset, Pos } from "./types";
+
 // src/core/constants.ts
 export type FaceName = "top" | "bottom" | "north" | "south" | "east" | "west";
 
@@ -104,3 +106,39 @@ export const ANIM = {
     durationMs: 140,
   },
 } as const;
+export const BUILD_AREA_SIZE = 64;             
+export const BUILD_AREA_OFFSET: [number, number, number] = [0, 0, 0];
+
+export const ENV_PRESETS: Record<EnvPreset, {
+  skyTop: string; skyBottom: string;
+  dirPosition: [number, number, number]; // relativo ao centro
+  dirColor: string; dirIntensity: number;
+  ambient: number; hemi: number; hemiSky: string; hemiGround: string;
+}> = {
+  day: {
+    skyTop: "#7ec8ff", skyBottom: "#0b0f1a",
+    dirPosition: [0.35, 0.30, 0.15],
+    dirColor: "#fff7e6", dirIntensity: 1.1,
+    ambient: 0.18, hemi: 0.28, hemiSky: "#9fbaff", hemiGround: "#2b2b2b",
+  },
+  dusk: {
+    skyTop: "#5a7bd6", skyBottom: "#0a0e18",
+    dirPosition: [0.1, 0.22, 0.38],
+    dirColor: "#ffd7a1", dirIntensity: 0.85,
+    ambient: 0.15, hemi: 0.22, hemiSky: "#8aa7ff", hemiGround: "#24242a",
+  },
+  night: {
+    skyTop: "#1a2236", skyBottom: "#070a12",
+    dirPosition: [0.25, 0.15, -0.3],
+    dirColor: "#b9ccff", dirIntensity: 0.35,
+    ambient: 0.10, hemi: 0.18, hemiSky: "#6b7c9e", hemiGround: "#151720",
+  },
+};
+
+export const GROUND_SIZE = 24;
+export const ACTION_COOLDOWN = 120;
+export const DRAG_THRESHOLD = 4;
+
+// core/keys.ts
+export const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
+export const parseKey = (k: string) => k.split(",").map(Number) as Pos;

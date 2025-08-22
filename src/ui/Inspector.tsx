@@ -29,12 +29,6 @@ const Row: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, chil
   </div>
 );
 
-const Value: React.FC<{ v: number }> = ({ v }) => (
-  <span className="w-10 text-right tabular-nums text-[11px] text-muted-foreground">
-    {v.toFixed(2)}
-  </span>
-);
-
 function fmt(ts?: number) {
   if (!ts) return "—";
   const d = new Date(ts);
@@ -43,11 +37,6 @@ function fmt(ts?: number) {
 
 /* ----------------- Inspector ----------------- */
 export const Inspector: React.FC = () => {
-  // Luz
-  const lightSpeed = useWorld((s) => s.lightSpeed);
-  const setLightSpeed = useWorld((s) => s.setLightSpeed);
-  const lightIntensity = useWorld((s) => s.lightIntensity);
-  const setLightIntensity = useWorld((s) => s.setLightIntensity);
 
   // Áudio (estado global)
   const audioEnabled = useWorld((s) => s.audioEnabled);
@@ -59,13 +48,7 @@ export const Inspector: React.FC = () => {
   const setCurrentTrack = useWorld((s) => s.setCurrentTrack);
 
   const hasTracks = (tracks?.length ?? 0) > 0;
-
-  // Sliders (UI local)
-  const [ls, setLS] = React.useState(lightSpeed);
-  const [li, setLI] = React.useState(lightIntensity);
   const [vol, setVol] = React.useState(audioVolume);
-  React.useEffect(() => setLS(lightSpeed), [lightSpeed]);
-  React.useEffect(() => setLI(lightIntensity), [lightIntensity]);
   React.useEffect(() => setVol(audioVolume), [audioVolume]);
 
   // Limpar mundo
@@ -83,7 +66,7 @@ export const Inspector: React.FC = () => {
   const [slots, setSlots] = React.useState(() => listSlots());
   const [saving, setSaving] = React.useState(false);
   const [autoMeta, setAutoMeta] = React.useState(() => loadAuto());
-  
+
   const refreshSlots = React.useCallback(() => setSlots(listSlots()), []);
 
   const saveToSlot = React.useCallback(
@@ -204,37 +187,6 @@ export const Inspector: React.FC = () => {
           defaultValue={["light", "audio", "slots"]}
           className="w-full"
         >
-          {/* Luz / Sombras */}
-          <AccordionItem value="light">
-            <AccordionTrigger>Luz / Sombras</AccordionTrigger>
-            <AccordionContent className="pt-0">
-              <Row label="Velocidade">
-                <Slider
-                  value={[ls]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  className="w-40"
-                  onValueChange={([v]) => setLS(v)}
-                  onValueCommit={([v]) => setLightSpeed(v)}
-                />
-                <Value v={ls} />
-              </Row>
-              <Row label="Intensidade">
-                <Slider
-                  value={[li]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  className="w-40"
-                  onValueChange={([v]) => setLI(v)}
-                  onValueCommit={([v]) => setLightIntensity(v)}
-                />
-                <Value v={li} />
-              </Row>
-            </AccordionContent>
-          </AccordionItem>
-
           {/* Áudio */}
           <AccordionItem value="audio">
             <AccordionTrigger>Áudio</AccordionTrigger>

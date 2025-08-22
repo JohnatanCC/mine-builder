@@ -6,6 +6,7 @@ import type {
   Mode,
   Pos,
   CameraMode,
+  EnvPreset,
 } from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
@@ -16,7 +17,6 @@ export type Voxel = { x: number; y: number; z: number; type: BlockType };
 export type WorldSnapshot = {
   seed?: number;
   blocks: Voxel[];
-  // futuras props (luz, vento etc.)
 };
 
 // ===== WorldState (soma dos slices) =====
@@ -35,33 +35,9 @@ export type WorldState = {
   mode: Mode;
   setMode: (m: Mode) => void;
 
-  // visual.slice
+  // visual-wire.slice (apenas o que usamos)
   showWire: boolean;
   setShowWire: (v: boolean) => void;
-  highlightColor: "black" | "white";
-  setHighlightColor: (c: "black" | "white") => void;
-  fogEnabled: boolean;
-  setFogEnabled: (v: boolean) => void;
-  fogDensity: number;
-  setFogDensity: (v: number) => void;
-  lightAnimate: boolean;
-  setLightAnimate: (v: boolean) => void;
-  lightSpeed: number;
-  setLightSpeed: (v: number) => void;
-  lightIntensity: number;
-  setLightIntensity: (v: number) => void;
-  foliageMode: "block" | "cross2" | "cross3";
-  setFoliageMode: (m: "block" | "cross2" | "cross3") => void;
-  leavesDensity: number;
-  setLeavesDensity: (v: number) => void;
-  leavesScale: number;
-  setLeavesScale: (v: number) => void;
-  windEnabled: boolean;
-  setWindEnabled: (v: boolean) => void;
-  windStrength: number;
-  setWindStrength: (v: number) => void;
-  windSpeed: number;
-  setWindSpeed: (v: number) => void;
 
   // input.slice
   hoveredKey?: string | null;
@@ -94,13 +70,9 @@ export type WorldState = {
   canUndo: () => boolean;
   canRedo: () => boolean;
 
-  // anim.slice
+  // anim.slice (somente flags/efeitos que ainda usamos)
   blockAnimEnabled: boolean;
   setBlockAnimEnabled: (v: boolean) => void;
-  blockAnimDuration: number;
-  setBlockAnimDuration: (v: number) => void;
-  blockAnimBounce: number;
-  setBlockAnimBounce: (v: number) => void;
   effects: {
     id: number;
     pos: Pos;
@@ -120,32 +92,40 @@ export type WorldState = {
   currentTrack: AmbientId;
   setCurrentTrack: (id: AmbientId) => void;
 
-  // NEW: snapshot API
+  // snapshot API
   getSnapshot: () => WorldSnapshot;
   loadSnapshot: (snap: WorldSnapshot) => void;
+
+  // env.slice (presets de ambiente)
+  envPreset: EnvPreset;
+  setEnvPreset: (p: EnvPreset) => void;
+  cycleEnvPreset: () => void;
 };
 
 // ===== importar slices =====
 import { createBlocksSlice } from "./slices/blocks.slice";
 import { createSelectionSlice } from "./slices/selection.slice";
-import { createVisualSlice } from "./slices/visual.slice";
 import { createInputSlice } from "./slices/input.slice";
 import { createUISlice } from "./slices/ui.slice";
 import { createHistorySlice } from "./slices/history.slice";
 import { createAnimSlice } from "./slices/anim.slice";
 import { createAudioSlice } from "./slices/audio.slice";
+import { createEnvSlice } from "./slices/env.slice";
+import { createVisualWireSlice } from "./slices/visual-wire";
+
 
 // ===== create store (compacto) =====
 export const useWorld = create<WorldState>()((set, get, api) => {
   const S = {
     ...createBlocksSlice(set, get, api),
     ...createSelectionSlice(set, get, api),
-    ...createVisualSlice(set, get, api),
     ...createInputSlice(set, get, api),
     ...createUISlice(set, get, api),
     ...createHistorySlice(set, get, api),
     ...createAnimSlice(set, get, api),
+    ...createEnvSlice(set, get, api),
     ...createAudioSlice(set, get, api),
+    ...createVisualWireSlice(set, get, api),
   } as Partial<WorldState> & Record<string, any>;
 
   const safeBlocks = S.blocks ?? new Map<string, BlockData>();
@@ -154,9 +134,8 @@ export const useWorld = create<WorldState>()((set, get, api) => {
   const getSnapshot = (): WorldSnapshot => {
     const voxels: Voxel[] = [];
     const blocks = get().blocks ?? safeBlocks;
-
     for (const [k, data] of blocks.entries()) {
-      const [x, y, z] = parseKey(k); // Pos = [x,y,z]
+      const [x, y, z] = parseKey(k);
       voxels.push({ x, y, z, type: (data as BlockData).type });
     }
     return { blocks: voxels };
@@ -164,14 +143,10 @@ export const useWorld = create<WorldState>()((set, get, api) => {
 
   const loadSnapshot = (snap: WorldSnapshot) => {
     if (!snap || !Array.isArray(snap.blocks)) return;
-
-    // Recria o Map de forma imutável
     const next = new Map<string, BlockData>();
     for (const v of snap.blocks) {
       next.set(makeKey(v.x, v.y, v.z), { type: v.type } as BlockData);
     }
-
-    // ✅ zustand set(): apenas 1-2 args (sem label) e merge parcial
     set({
       blocks: next,
       effects: [],
@@ -182,6 +157,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
   };
 
   return {
+    // blocks
     blocks: safeBlocks,
     setBlock: S.setBlock!,
     removeBlock: S.removeBlock!,
@@ -189,38 +165,17 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     setBlockSilent: S.setBlockSilent!,
     removeBlockSilent: S.removeBlockSilent!,
 
+    // selection
     current: S.current!,
     setCurrent: S.setCurrent!,
     mode: S.mode!,
     setMode: S.setMode!,
 
+    // wireframe
     showWire: S.showWire!,
     setShowWire: S.setShowWire!,
-    highlightColor: S.highlightColor!,
-    setHighlightColor: S.setHighlightColor!,
-    fogEnabled: S.fogEnabled!,
-    setFogEnabled: S.setFogEnabled!,
-    fogDensity: S.fogDensity!,
-    setFogDensity: S.setFogDensity!,
-    lightAnimate: S.lightAnimate!,
-    setLightAnimate: S.setLightAnimate!,
-    lightSpeed: S.lightSpeed!,
-    setLightSpeed: S.setLightSpeed!,
-    lightIntensity: S.lightIntensity!,
-    setLightIntensity: S.setLightIntensity!,
-    foliageMode: S.foliageMode!,
-    setFoliageMode: S.setFoliageMode!,
-    leavesDensity: S.leavesDensity!,
-    setLeavesDensity: S.setLeavesDensity!,
-    leavesScale: S.leavesScale!,
-    setLeavesScale: S.setLeavesScale!,
-    windEnabled: S.windEnabled!,
-    setWindEnabled: S.setWindEnabled!,
-    windStrength: S.windStrength!,
-    setWindStrength: S.setWindStrength!,
-    windSpeed: S.windSpeed!,
-    setWindSpeed: S.setWindSpeed!,
 
+    // input
     hoveredKey: S.hoveredKey,
     setHoveredKey: S.setHoveredKey!,
     hoveredAdj: S.hoveredAdj!,
@@ -232,6 +187,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     isCtrlDown: S.isCtrlDown!,
     setCtrlDown: S.setCtrlDown!,
 
+    // ui
     showFps: S.showFps!,
     setShowFps: S.setShowFps!,
     showHelp: S.showHelp!,
@@ -239,6 +195,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     cameraMode: S.cameraMode!,
     setCameraMode: S.setCameraMode!,
 
+    // history
     past: S.past!,
     future: S.future!,
     currentStroke: S.currentStroke!,
@@ -249,16 +206,14 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     canUndo: S.canUndo!,
     canRedo: S.canRedo!,
 
+    // anim (sem duration/bounce legados)
     blockAnimEnabled: S.blockAnimEnabled!,
     setBlockAnimEnabled: S.setBlockAnimEnabled!,
-    blockAnimDuration: S.blockAnimDuration!,
-    setBlockAnimDuration: S.setBlockAnimDuration!,
-    blockAnimBounce: S.blockAnimBounce!,
-    setBlockAnimBounce: S.setBlockAnimBounce!,
     effects: S.effects ?? [],
     addRemoveEffect: S.addRemoveEffect!,
     gcEffects: S.gcEffects!,
 
+    // audio
     audioEnabled: S.audioEnabled!,
     setAudioEnabled: S.setAudioEnabled!,
     audioVolume: S.audioVolume!,
@@ -267,13 +222,18 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     currentTrack: S.currentTrack!,
     setCurrentTrack: S.setCurrentTrack!,
 
-    // === snapshot API ===
+    // env
+    envPreset: S.envPreset!,
+    setEnvPreset: S.setEnvPreset!,
+    cycleEnvPreset: S.cycleEnvPreset!,
+
+    // snapshot
     getSnapshot,
     loadSnapshot,
   };
 });
 
-// ⬇️⬇️ NOVO: helper para importar mundos em JSON (usado no App.tsx)
+// ⬇️ Helpers p/ importar mundos JSON (usado no App.tsx)
 type ExternalBlock = {
   x: number;
   y: number;
@@ -281,40 +241,29 @@ type ExternalBlock = {
   type: BlockType | string;
 };
 
-// Guards para estreitar o tipo de payload
-function hasWorld(
-  obj: unknown
-): obj is { world: { blocks?: ExternalBlock[] } } {
-  return (
-    !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world
-  );
+function hasWorld(obj: unknown): obj is { world: { blocks?: ExternalBlock[] } } {
+  return !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world;
 }
 function hasBlocks(obj: unknown): obj is { blocks?: ExternalBlock[] } {
   return !!obj && typeof obj === "object" && "blocks" in obj;
 }
 
-/** Converte JSON externo para o WorldSnapshot canônico */
 function externalToSnapshot(payload: unknown): WorldSnapshot {
   let arr: ExternalBlock[] = [];
-
   if (hasWorld(payload) && Array.isArray(payload.world.blocks)) {
     arr = payload.world.blocks;
   } else if (hasBlocks(payload) && Array.isArray(payload.blocks)) {
     arr = payload.blocks;
   }
-
   const voxels: Voxel[] = arr.map((b) => ({
     x: Number(b.x) | 0,
     y: Number(b.y) | 0,
     z: Number(b.z) | 0,
-    // confiamos no pipeline para fornecer tipos válidos; se quiser, valide aqui
     type: b.type as BlockType,
   }));
-
   return { blocks: voxels };
 }
 
-/** Importa um mundo exportado (JSON) para o estado */
 export function importWorld(payload: unknown) {
   const snap = externalToSnapshot(payload);
   useWorld.getState().loadSnapshot(snap);
