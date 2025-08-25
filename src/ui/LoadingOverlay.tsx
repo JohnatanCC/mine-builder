@@ -1,25 +1,13 @@
-// NEW FILE: src/ui/LoadingOverlay.tsx
+// UPDATE: src/ui/LoadingOverlay.tsx
 import * as React from "react";
-import { useLoading } from "@/state/loading.store";
-export function LoadingOverlay({ minShowMs = 500 }: { minShowMs?: number }) {
-    const pending = useLoading((s) => s.pending);
-    const [visible, setVisible] = React.useState(false);
-    const hideAtRef = React.useRef<number>(0);
+
+export function LoadingOverlay() {
+    const [visible, setVisible] = React.useState(true);
 
     React.useEffect(() => {
-        if (pending > 0) {
-            // começou a carregar
-            hideAtRef.current = 0;
-            setVisible(true);
-        } else {
-            // terminou: aguarda um pouquinho para não piscar
-            hideAtRef.current = performance.now() + minShowMs;
-            const id = setTimeout(() => {
-                if (performance.now() >= hideAtRef.current) setVisible(false);
-            }, minShowMs);
-            return () => clearTimeout(id);
-        }
-    }, [pending, minShowMs]);
+        const timer = setTimeout(() => setVisible(false), 1000); // desaparece após 1s
+        return () => clearTimeout(timer);
+    }, []);
 
     if (!visible) return null;
 
@@ -63,7 +51,8 @@ export function LoadingOverlay({ minShowMs = 500 }: { minShowMs?: number }) {
         fontWeight: 700,
         fontSize: 16,
         textShadow: "0 0 8px rgba(110,231,132,0.35)",
-        fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'",
+        fontFamily:
+            "Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'",
         letterSpacing: 0.2,
     };
 
@@ -87,7 +76,7 @@ export function LoadingOverlay({ minShowMs = 500 }: { minShowMs?: number }) {
                 <div>
                     <div style={title}>Carregando pacotes…</div>
                     <div style={subtitle}>
-                        Texturas/PNG ({pending}){" "}
+                        Inicializando
                         <span style={{ animation: "mb_blink 1.4s infinite" }}>.</span>
                         <span style={{ animation: "mb_blink 1.4s 0.2s infinite" }}>.</span>
                         <span style={{ animation: "mb_blink 1.4s 0.4s infinite" }}>.</span>

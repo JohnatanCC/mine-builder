@@ -51,6 +51,9 @@ export const Inspector: React.FC = () => {
   const [vol, setVol] = React.useState(audioVolume);
   React.useEffect(() => setVol(audioVolume), [audioVolume]);
 
+  const renderPreset = useWorld(s => s.renderPreset);
+  const setRenderPreset = useWorld(s => s.setRenderPreset);
+
   // Limpar mundo
   const onClearWorld = () => {
     useWorld.setState({
@@ -240,6 +243,25 @@ export const Inspector: React.FC = () => {
               <TerrainPanel />
             </AccordionContent>
           </AccordionItem> */}
+
+          <AccordionItem value="light">
+            <AccordionTrigger>Luz / Sombras</AccordionTrigger>
+            <AccordionContent className="pt-0">
+
+              <Row label="Pré-definição">
+                <Select value={renderPreset} onValueChange={(v) => setRenderPreset(v as any)}>
+                  <SelectTrigger className="h-7 w-44">
+                    <SelectValue placeholder="Qualidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="quality">Qualidade</SelectItem>
+                    <SelectItem value="performance">Desempenho</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Row>
+
+            </AccordionContent>
+          </AccordionItem>
 
           {/* Mundo / Slots */}
           <AccordionItem value="slots">
