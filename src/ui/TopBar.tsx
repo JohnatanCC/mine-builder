@@ -35,7 +35,7 @@ export const TopBar: React.FC = () => {
           Mine‑Builder
           </span>
           </div>
-        <span className="rounded-sm bg-muted px-1.5 py-0.5  leading-none text-muted-foreground">v0.2.0</span>
+        <span className="rounded-sm bg-muted px-1.5 py-0.5  leading-none text-muted-foreground">v0.4.0</span>
         <Badge variant="secondary" className="ml-2 rounded-sm">Blocos: {blockCount}</Badge>
       </div>
 
