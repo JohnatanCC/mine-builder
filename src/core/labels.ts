@@ -6,7 +6,10 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   grass: "Grama",
   dirt: "Terra",
   stone_brick: "Tijolo de pedra",
+  chiseled_stone_bricks: "Tijolos de Pedra Cinzelados",
   cobblestone: "Pedregulho",
+  deepslate_tiles: "Ladrilhos de Ardósia Profunda",
+  amethyst_block: "Bloco de Ametista",
   oak_planks: "Madeira Carvalho",
   spruce_planks: "Madeira Pinheiro",
   birch_planks: "Madeira Bétula",
@@ -17,7 +20,21 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   spruce_leaves: "Folhas Pinheiro",
   birch_leaves: "Folhas Bétula",
   brick: "Tijolos",
+  redstone_lamp_on: "Lâmpada de Redstone (Liga)",
   white_concrete: "Concreto Branco",
+  gray_concrete: "Concreto Cinza",
+  black_concrete: "Concreto Preto",
+  red_concrete: "Concreto Vermelho",
+  blue_concrete: "Concreto Azul",
+  yellow_concrete: "Concreto Amarelo",
+  green_concrete: "Concreto Verde",
+  orange_concrete: "Concreto Laranja",
+  purple_concrete: "Concreto Roxo",
+  pink_concrete: "Concreto Rosa",
+  cyan_concrete: "Concreto Ciano",
+  lime_concrete: "Concreto Lima",
+  magenta_concrete: "Concreto Magenta",
+  brown_concrete: "Concreto Marrom"
 };
 
 /**

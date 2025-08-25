@@ -1,6 +1,7 @@
 // UPDATE: src/systems/serializer.ts
 import { useWorld } from "@/state/world.store";
 import { toast } from "sonner";
+import type { WorldSnapshot } from "@/core/types";
 
 // Versão atual da aplicação - atualizar a cada release
 const CURRENT_VERSION = "0.4.0";
@@ -12,7 +13,7 @@ type ImportResult =
 type WorldSaveData = {
   version: string;
   timestamp: number;
-  world: any; // snapshot do mundo
+  world: WorldSnapshot;
   metadata?: {
     appVersion: string;
     userAgent?: string;

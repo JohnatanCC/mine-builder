@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { getMaterialFor } from '../core/materials';
 import { key } from '../core/keys';
-import type { BlockType, Pos } from '../core/types';
+import type { BlockType, Pos, MaterialProperties } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
 import { getBlockMaterialsCached } from '@/systems/textures/blockTextures';
@@ -13,6 +13,12 @@ import { ANIM } from '@/core/constants';
 import { easeOutCubic, normTime } from '@/core/anim';
 
 const BRUSH_INTERVAL_MS = 22; // ~45 Hz
+
+// Função helper para aplicar propriedades de material de forma type-safe
+function applyMaterialProperties(material: THREE.Material, properties: MaterialProperties): void {
+  const mat = material as THREE.Material & MaterialProperties;
+  Object.assign(mat, properties);
+}
 
 export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   const setBlock = useWorld((s) => s.setBlock);
@@ -276,17 +282,22 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   const materialToUse = React.useMemo(() => {
     const tune = (m: THREE.Material) => {
       if (type === 'glass') {
-        (m as any).transparent = true;
-        (m as any).opacity = 0.86;
-        (m as any).depthWrite = false;
+        applyMaterialProperties(m, {
+          transparent: true,
+          opacity: 0.86,
+          depthWrite: false
+        });
         return;
       }
       if (type === 'oak_leaves' || type === 'spruce_leaves' || type === 'birch_leaves') {
-        (m as any).transparent = true;
-        (m as any).alphaTest = 0.25;
-        (m as any).depthWrite = true;
-        (m as any).alphaToCoverage = true;
-        (m as any).side = THREE.DoubleSide;
+        applyMaterialProperties(m, {
+          transparent: true,
+          alphaTest: 0.25,
+          depthWrite: true
+        });
+        const matAny = m as any; // Propriedades específicas do Three.js não tipadas
+        matAny.alphaToCoverage = true;
+        matAny.side = THREE.DoubleSide;
       }
     };
 

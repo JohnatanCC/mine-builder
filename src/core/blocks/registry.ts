@@ -6,7 +6,7 @@ import { resolveBlockIconURL } from "@/systems/textures/blockIcon";
 export type BlockDef = {
   id: BlockType;
   label: string;
-  category: "stone" | "wood" | "log" | "leaves" | "misc" | "brick";
+  category: "stone" | "wood" | "log" | "leaves" | "misc" | "brick" | "concrete";
   isLeaves?: boolean;
   material?: () => THREE.Material | THREE.Material[];
   preview: () => THREE.Texture;
@@ -57,11 +57,29 @@ export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.
     category: "stone",
     preview: () => loadPreviewTextureFromFolder("stone_brick"),
   },
+  chiseled_stone_bricks: {
+    id: "chiseled_stone_bricks",
+    label: BLOCK_LABEL.chiseled_stone_bricks,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("chiseled_stone_bricks"),
+  },
   cobblestone: {
     id: "cobblestone",
     label: BLOCK_LABEL.cobblestone,
     category: "stone",
     preview: () => loadPreviewTextureFromFolder("cobblestone"),
+  },
+  deepslate_tiles: {
+    id: "deepslate_tiles",
+    label: BLOCK_LABEL.deepslate_tiles,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("deepslate_tiles"),
+  },
+  amethyst_block: {
+    id: "amethyst_block",
+    label: BLOCK_LABEL.amethyst_block,
+    category: "stone",
+    preview: () => loadPreviewTextureFromFolder("amethyst_block"),
   },
   glass: {
     id: "glass",
@@ -77,6 +95,12 @@ export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.
     category: "brick",
     preview: () => loadPreviewTextureFromFolder("brick"),
   },
+  redstone_lamp_on: {
+    id: "redstone_lamp_on",
+    label: BLOCK_LABEL.redstone_lamp_on,
+    category: "misc",
+    preview: () => loadPreviewTextureFromFolder("redstone_lamp_on"),
+  },
 
   // chão/misc
   grass: {
@@ -91,11 +115,91 @@ export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.
     category: "misc",
     preview: () => loadPreviewTextureFromFolder("dirt"),
   },
+
+  // concretos
   white_concrete: {
     id: "white_concrete",
     label: BLOCK_LABEL.white_concrete,
-    category: "misc",
+    category: "concrete",
     preview: () => loadPreviewTextureFromFolder("white_concrete"),
+  },
+  gray_concrete: {
+    id: "gray_concrete",
+    label: BLOCK_LABEL.gray_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("gray_concrete"),
+  },
+  black_concrete: {
+    id: "black_concrete",
+    label: BLOCK_LABEL.black_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("black_concrete"),
+  },
+  red_concrete: {
+    id: "red_concrete",
+    label: BLOCK_LABEL.red_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("red_concrete"),
+  },
+  blue_concrete: {
+    id: "blue_concrete",
+    label: BLOCK_LABEL.blue_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("blue_concrete"),
+  },
+  yellow_concrete: {
+    id: "yellow_concrete",
+    label: BLOCK_LABEL.yellow_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("yellow_concrete"),
+  },
+  green_concrete: {
+    id: "green_concrete",
+    label: BLOCK_LABEL.green_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("green_concrete"),
+  },
+  orange_concrete: {
+    id: "orange_concrete",
+    label: BLOCK_LABEL.orange_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("orange_concrete"),
+  },
+  purple_concrete: {
+    id: "purple_concrete",
+    label: BLOCK_LABEL.purple_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("purple_concrete"),
+  },
+  pink_concrete: {
+    id: "pink_concrete",
+    label: BLOCK_LABEL.pink_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("pink_concrete"),
+  },
+  cyan_concrete: {
+    id: "cyan_concrete",
+    label: BLOCK_LABEL.cyan_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("cyan_concrete"),
+  },
+  lime_concrete: {
+    id: "lime_concrete",
+    label: BLOCK_LABEL.lime_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("lime_concrete"),
+  },
+  magenta_concrete: {
+    id: "magenta_concrete",
+    label: BLOCK_LABEL.magenta_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("magenta_concrete"),
+  },
+  brown_concrete: {
+    id: "brown_concrete",
+    label: BLOCK_LABEL.brown_concrete,
+    category: "concrete",
+    preview: () => loadPreviewTextureFromFolder("brown_concrete"),
   },
 
   // pranchas
@@ -165,22 +269,59 @@ export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.
 
 // Lista ordenada para hotbar (ajuste como quiser)
 export const BLOCKS_ORDER: BlockType[] = [
+  // Pedras
   "stone",
-  "stone_brick",
+  "stone_brick", 
+  "chiseled_stone_bricks",
   "cobblestone",
+  "deepslate_tiles",
+  "amethyst_block",
+  
+  // Materiais básicos
   "glass",
+  "brick",
+  "redstone_lamp_on",
+  
+  // Madeiras
   "oak_planks",
-  "spruce_planks",
+  "spruce_planks", 
   "birch_planks",
+  
+  // Troncos
   "oak_log",
   "spruce_log",
   "birch_log",
+  
+  // Folhas
   "oak_leaves",
   "spruce_leaves",
   "birch_leaves",
+  
+  // Terreno
   "grass",
   "dirt",
-  "brick"
+  
+  // Concretos neutros
+  "white_concrete",
+  "gray_concrete", 
+  "black_concrete",
+  
+  // Concretos primários
+  "red_concrete",
+  "blue_concrete",
+  "yellow_concrete",
+  
+  // Concretos secundários
+  "green_concrete",
+  "orange_concrete",
+  "purple_concrete",
+  
+  // Concretos especiais
+  "pink_concrete",
+  "cyan_concrete",
+  "lime_concrete",
+  "magenta_concrete",
+  "brown_concrete"
 ];
 
 // Acesso helpers

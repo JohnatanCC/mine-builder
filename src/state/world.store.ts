@@ -104,6 +104,12 @@ export type WorldState = {
   envPreset: EnvPreset;
   setEnvPreset: (p: EnvPreset) => void;
   cycleEnvPreset: () => void;
+
+  // Preset de renderização (Desempenho/Qualidade)
+  renderPreset: RenderPreset;
+  renderSettings: RenderSettings;
+  setRenderPreset: (p: RenderPreset) => void;
+  toggleRenderPreset: () => void;
 };
 
 // ===== importar slices =====
@@ -116,6 +122,7 @@ import { createAnimSlice } from "./slices/anim.slice";
 import { createAudioSlice } from "./slices/audio.slice";
 import { createEnvSlice } from "./slices/env.slice";
 import { createVisualWireSlice } from "./slices/visual-wire";
+import { createRenderSlice, type RenderPreset, type RenderSettings } from "./slices/render.slice";
 
 // ===== create store =====
 export const useWorld = create<WorldState>()((set, get, api) => {
@@ -129,6 +136,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     ...createEnvSlice(set, get, api),
     ...createAudioSlice(set, get, api),
     ...createVisualWireSlice(set, get, api),
+    ...createRenderSlice(set, get, api),
   } as Partial<WorldState> & Record<string, any>;
 
   const safeBlocks = S.blocks ?? new Map<string, BlockData>();
@@ -234,24 +242,41 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     setEnvPreset: S.setEnvPreset!,
     cycleEnvPreset: S.cycleEnvPreset!,
 
+        renderPreset: S.renderPreset!,
+    renderSettings: S.renderSettings!,
+    setRenderPreset: S.setRenderPreset!,
+    toggleRenderPreset: S.toggleRenderPreset!,
+
     // snapshot
     getSnapshot,
     loadSnapshot,
+    
   };
 });
 
 // === Import helpers (inalterado) ===
-type ExternalBlock = { x: number; y: number; z: number; type: BlockType | string };
-function hasWorld(obj: unknown): obj is { world: { blocks?: ExternalBlock[] } } {
-  return !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world;
+type ExternalBlock = {
+  x: number;
+  y: number;
+  z: number;
+  type: BlockType | string;
+};
+function hasWorld(
+  obj: unknown
+): obj is { world: { blocks?: ExternalBlock[] } } {
+  return (
+    !!obj && typeof obj === "object" && "world" in obj && !!(obj as any).world
+  );
 }
 function hasBlocks(obj: unknown): obj is { blocks?: ExternalBlock[] } {
   return !!obj && typeof obj === "object" && "blocks" in obj;
 }
 function externalToSnapshot(payload: unknown): WorldSnapshot {
   let arr: ExternalBlock[] = [];
-  if (hasWorld(payload) && Array.isArray(payload.world.blocks)) arr = payload.world.blocks;
-  else if (hasBlocks(payload) && Array.isArray(payload.blocks)) arr = payload.blocks;
+  if (hasWorld(payload) && Array.isArray(payload.world.blocks))
+    arr = payload.world.blocks;
+  else if (hasBlocks(payload) && Array.isArray(payload.blocks))
+    arr = payload.blocks;
   const voxels: Voxel[] = arr.map((b) => ({
     x: Number(b.x) | 0,
     y: Number(b.y) | 0,

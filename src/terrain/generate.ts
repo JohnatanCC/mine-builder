@@ -1,5 +1,5 @@
 // NEW: src/terrain/generate.ts
-import type { WorldSnapshot, Voxel } from "@/state/world.store";
+import type { WorldSnapshot, Voxel, BlockType } from "@/core/types";
 
 export type IslandKind = "mini" | "atoll" | "plateau" | "mesa";
 
@@ -93,12 +93,13 @@ export function generateIslandSnapshot(opts: {
         let type: Voxel["type"] = "dirt";
         if (y === seaLevel + maxH) type = "grass";
         if (maxH >= 5 && y <= seaLevel + 1) type = "stone";
-        voxels.push({ x, y, z, type: type as any });
+        voxels.push({ x, y, z, type });
       }
 
       // água raso em volta
       if (maxH <= 0 && fall > 0.1) {
-        voxels.push({ x, y: seaLevel, z, type: "water" as any });
+        // Nota: "water" não está definido em BlockType, usando "glass" como placeholder
+        voxels.push({ x, y: seaLevel, z, type: "glass" });
       }
     }
   }
@@ -116,7 +117,12 @@ export function mergeConstruction(
   const out: Voxel[] = base.blocks.slice();
 
   for (const b of construction.world.blocks) {
-    out.push({ x: b.x + offset.x, y: b.y + offset.y, z: b.z + offset.z, type: b.type as any });
+    out.push({ 
+      x: b.x + offset.x, 
+      y: b.y + offset.y, 
+      z: b.z + offset.z, 
+      type: b.type as BlockType 
+    });
   }
   return { blocks: out };
 }

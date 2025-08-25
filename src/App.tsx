@@ -19,11 +19,11 @@ import { CameraControls } from "./components/CameraControls";
 import { RemoveBurst } from "./components/effects/RemoveBurst";
 
 // função de importação já existente
-import { importWorld } from "@/state/world.store";
+import { importWorld, useWorld } from "@/state/world.store";
 import { WireGrid } from "./components/WireGrid";
 import { WireframeAll } from "./components/WireframeAll";
-import * as THREE from "three"; // ⬅️ novo
 import { SkyBackdrop } from "./components/SkyBackdrop";
+import { LoadingOverlay } from "./ui/LoadingOverlay";
 
 export default function App() {
   React.useEffect(() => {
@@ -37,6 +37,8 @@ export default function App() {
         console.error("Falha ao carregar terreno padrão:", err);
       });
   }, []);
+  const preset = useWorld(s => s.renderPreset);
+  const render = useWorld(s => s.renderSettings);
 
   return (
     <AppShell
@@ -46,24 +48,16 @@ export default function App() {
       toolsOverlay={<ToolsRail />}
     >
       <div className="relative h-full w-full bg-transparent">
-        {/* Gradiente CSS por trás do Canvas */}
         <SkyBackdrop />
         <Canvas
-          gl={{ antialias: true, alpha: true }} // ⬅️ permite ver o gradiente de trás
-          shadows
-          dpr={[1, 1.5]}
+          key={`cv-${preset}`}
           camera={{ position: [50, 20, 40], fov: 30 }}
-          onCreated={({ gl }) => {
-            gl.setClearColor(0x000000, 0);          // transparente
-            gl.shadowMap.enabled = true;
-            gl.shadowMap.type = THREE.PCFSoftShadowMap;
-            gl.outputColorSpace = THREE.SRGBColorSpace;
-            gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.0;
-          }}
+          shadows={render.shadows}
+          dpr={render.dpr}
+          gl={{ antialias: render.antialias, powerPreference: preset === "performance" ? "low-power" : "high-performance" }}
         >
-          {/* Opcional: se preferir o céu 3D, descomente: */}
-          {/* <SkyDome top="#7ec8ff" bottom="#0b0f1a" /> */}
+
+
           <CameraControls />
           <Highlight />
           <Lights />
@@ -73,13 +67,13 @@ export default function App() {
           <WireGrid />
           <WireframeAll />
         </Canvas>
-        
-      </div>
 
+      </div>
       <FpsMeter />
       <CommandMenu /> {/* Ctrl+K */}
       <AmbientAudio />
       <Keybinds />
+      <LoadingOverlay />
     </AppShell>
   );
 }
