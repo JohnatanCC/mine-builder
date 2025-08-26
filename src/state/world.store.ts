@@ -6,6 +6,7 @@ import type {
   BlockVariant,
   BlockRotation,
   Mode,
+  Tool,
   Pos,
   CameraMode,
   EnvPreset,
@@ -49,6 +50,16 @@ export type WorldState = {
   rotateBlockVertical: () => void;
   mode: Mode;
   setMode: (m: Mode) => void;
+
+  // tools.slice
+  currentTool: Tool;
+  setCurrentTool: (t: Tool) => void;
+  lineStart: Pos | null;
+  setLineStart: (pos: Pos | null) => void;
+  lineEnd: Pos | null;
+  setLineEnd: (pos: Pos | null) => void;
+  mirrorAxis: "x" | "z";
+  setMirrorAxis: (axis: "x" | "z") => void;
 
   // visual-wire.slice
   showWire: boolean;
@@ -137,6 +148,7 @@ import { createAnimSlice } from "./slices/anim.slice";
 import { createAudioSlice } from "./slices/audio.slice";
 import { createEnvSlice } from "./slices/env.slice";
 import { createVisualWireSlice } from "./slices/visual-wire";
+import { createToolsSlice } from "./slices/tools.slice";
 import { createRenderSlice, type RenderPreset, type RenderSettings } from "./slices/render.slice";
 
 // ===== create store =====
@@ -151,6 +163,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     ...createEnvSlice(set, get, api),
     ...createAudioSlice(set, get, api),
     ...createVisualWireSlice(set, get, api),
+    ...createToolsSlice(set, get, api),
     ...createRenderSlice(set, get, api),
   } as Partial<WorldState> & Record<string, any>;
 
@@ -214,6 +227,16 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     rotateBlockVertical: S.rotateBlockVertical!,
     mode: S.mode!,
     setMode: S.setMode!,
+
+    // tools
+    currentTool: S.currentTool!,
+    setCurrentTool: S.setCurrentTool!,
+    lineStart: S.lineStart!,
+    setLineStart: S.setLineStart!,
+    lineEnd: S.lineEnd!,
+    setLineEnd: S.setLineEnd!,
+    mirrorAxis: S.mirrorAxis!,
+    setMirrorAxis: S.setMirrorAxis!,
 
     // wireframe
     showWire: S.showWire!,

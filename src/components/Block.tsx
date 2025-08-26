@@ -12,6 +12,7 @@ import { decideAction } from '@/systems/input/placement';
 import { ANIM } from '@/core/constants';
 import { easeOutCubic, normTime } from '@/core/anim';
 import { VariantBlock } from './VariantBlock';
+import { calculateLineBetweenPoints } from '@/systems/tools/geometry';
 
 const BRUSH_INTERVAL_MS = 22; // ~45 Hz
 
@@ -43,6 +44,11 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
 
   const beginStroke = useWorld((s) => s.beginStroke);
   const endStroke = useWorld((s) => s.endStroke);
+
+  // Tools state
+  const currentTool = useWorld((s) => s.currentTool);
+  const lineStart = useWorld((s) => s.lineStart);
+  const setLineStart = useWorld((s) => s.setLineStart);
 
   // animações
   const blockAnimEnabled = useWorld((s) => s.blockAnimEnabled);
@@ -196,6 +202,48 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
     }
 
     if (!isClick(e) || !canFire()) { resetStroke(); return; }
+
+    // Line Tool Logic
+    if (currentTool === "line") {
+      const adj = computeAdjacentPos(e); // Use adjacent position, not block position
+      
+      if (!lineStart) {
+        // First click - set start point
+        setLineStart(adj);
+        console.log("Line Tool: Start point set at", adj);
+        resetStroke();
+        return;
+      } else {
+        // Second click - draw line and reset
+        console.log("Line Tool: Drawing line from", lineStart, "to", adj);
+        
+        const linePoints = calculateLineBetweenPoints(lineStart, adj);
+        console.log("Line Tool: Calculated points:", linePoints);
+        
+        // Apply line based on mode
+        beginStroke();
+        
+        const button = getButton(); // 0 | 2
+        const action = decideAction({ button: (button === 2 ? 2 : 0) as 0 | 2, mode, ctrlDown: ctrl });
+        
+        linePoints.forEach(point => {
+          if (action === "delete") {
+            if (hasBlock(point)) {
+              removeBlock(point);
+            }
+          } else if (action === "place") {
+            if (!hasBlock(point)) {
+              setBlock(point, current);
+            }
+          }
+        });
+        
+        endStroke();
+        setLineStart(null); // Reset for next line
+        resetStroke();
+        return;
+      }
+    }
 
     const button = getButton(); // 0 | 2
     const action = decideAction({ button: (button === 2 ? 2 : 0) as 0 | 2, mode, ctrlDown: ctrl });

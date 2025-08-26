@@ -2,9 +2,9 @@
 import * as React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw } from "lucide-react";
+import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw, Minus } from "lucide-react";
 import { useWorld } from "@/state/world.store";
-import type { Mode } from "@/core/types";
+import type { Mode, Tool } from "@/core/types";
 
 const isMode = (m: Mode, s: "place" | "delete" | "brush") => String(m) === s;
 const toMode = (s: "place" | "delete" | "brush") => s as unknown as Mode;
@@ -81,6 +81,12 @@ export const ToolsRail: React.FC = () => {
   const rotateBlockVertical = useWorld(s => s.rotateBlockVertical);
   const currentRotation = useWorld(s => s.currentRotation);
 
+  // Tools state
+  const currentTool = useWorld(s => s.currentTool);
+  const setCurrentTool = useWorld(s => s.setCurrentTool);
+  const lineStart = useWorld(s => s.lineStart);
+  const setLineStart = useWorld(s => s.setLineStart);
+
   const effectiveBrush = isCtrlDown || isMode(mode, "brush");
 
   const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
@@ -95,14 +101,28 @@ export const ToolsRail: React.FC = () => {
         case 'q':
           e.preventDefault();
           setMode(toMode("place"));
+          setCurrentTool("brush"); // Reset tool when changing mode
+          setLineStart(null); // Clear line start
           break;
         case 'w':
           e.preventDefault();
           setMode(toMode("delete"));
+          setCurrentTool("brush"); // Reset tool when changing mode
+          setLineStart(null); // Clear line start
           break;
         case 'e':
           e.preventDefault();
           setMode(toMode("brush"));
+          setCurrentTool("brush"); // Reset tool when changing mode
+          setLineStart(null); // Clear line start
+          break;
+        case 'l':
+          e.preventDefault();
+          setCurrentTool("line");
+          break;
+        case 'escape':
+          e.preventDefault();
+          setLineStart(null); // Cancel line
           break;
         case 'r':
           e.preventDefault();
@@ -137,7 +157,7 @@ export const ToolsRail: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [setMode, showWire, setShowWire, cycleEnv, canUndo, undo, canRedo, redo, rotateBlockHorizontal, rotateBlockVertical]);
+  }, [setMode, setCurrentTool, setLineStart, showWire, setShowWire, cycleEnv, canUndo, undo, canRedo, redo, rotateBlockHorizontal, rotateBlockVertical]);
 
   return (
     <div className="flex items-center gap-4 rounded-lg border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
@@ -189,6 +209,25 @@ export const ToolsRail: React.FC = () => {
           shortcut="E"
         >
           <Brush className="h-4 w-4" />
+        </Tool>
+
+        <Tool
+          label={lineStart ? "Ferramenta Linha (Clique para finalizar)" : "Ferramenta Linha"}
+          pressed={currentTool === "line"}
+          onPressedChange={(v) => {
+            if (v) {
+              setCurrentTool("line");
+            } else {
+              setCurrentTool("brush"); // volta para brush quando desativado
+              setLineStart(null); // Clear line start when deactivating
+            }
+          }}
+          shortcut="L"
+        >
+          <Minus className="h-4 w-4" />
+          {lineStart && (
+            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-orange-500 border-2 border-background animate-pulse" />
+          )}
         </Tool>
       </div>
 
