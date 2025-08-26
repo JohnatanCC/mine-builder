@@ -10,7 +10,7 @@ export const SkyBackdrop: React.FC = () => {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-10"
+      className="pointer-events-none absolute inset-0 z-0"
       style={{
         background: `linear-gradient(180deg, ${preset.skyTop} 0%, ${preset.skyBottom} 100%)`,
       }}

@@ -13,6 +13,7 @@ import { Inspector } from "./ui/Inspector";
 import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
 import { ToolsRail } from "./ui/ToolsRail";
+import { SelectedBlock } from "./ui/SelectedBlock";
 import { AmbientAudio } from "./components/AmbientAudio";
 import { Keybinds } from "./components/Keybinds";
 import { CameraControls } from "./components/CameraControls";
@@ -45,7 +46,12 @@ export default function App() {
       topBar={<TopBar />}
       left={<BlockCatalog />}
       right={<Inspector />}
-      toolsOverlay={<ToolsRail />}
+      toolsOverlay={
+        <div className="flex flex-col gap-2">
+          <ToolsRail />
+          <SelectedBlock />
+        </div>
+      }
     >
       <div className="relative h-full w-full bg-transparent">
         <SkyBackdrop />
