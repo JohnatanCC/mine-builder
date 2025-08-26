@@ -1,7 +1,8 @@
-// NEW FILE (ou UPDATE se já existir): src/components/AmbientAudio.tsx
+// UPDATE: src/components/AmbientAudio.tsx
 import * as React from "react";
 import { useWorld } from "@/state/world.store";
 import { AMBIENT_TRACKS, type AmbientId } from "@/audio/ambient";
+import { errorHandler } from "@/utils/errorHandler";
 
 /**
  * Player global de música ambiente:
@@ -10,6 +11,7 @@ import { AMBIENT_TRACKS, type AmbientId } from "@/audio/ambient";
  * - Só troca `src` ao mudar o id da trilha.
  * - Autoplay somente após um gesto do usuário.
  * - Pausa quando a aba fica oculta, retoma ao voltar.
+ * - Gestão de erros melhorada.
  */
 export function AmbientAudio() {
   const enabled = useWorld((s) => s.audioEnabled);
@@ -87,8 +89,8 @@ export function AmbientAudio() {
       return;
     }
     if (a.paused) {
-      a.play().catch(() => {
-        // aguardará gesto do usuário
+      a.play().catch((error: Error) => {
+        errorHandler.handleAudioError(error, trackId);
       });
     }
   }, [enabled, volume, trackId]);
@@ -99,7 +101,11 @@ export function AmbientAudio() {
       const a = audioRef.current;
       if (!a) return;
       if (document.hidden) a.pause();
-      else if (enabled && a.src) a.play().catch(() => {});
+      else if (enabled && a.src) {
+        a.play().catch((error: Error) => {
+          errorHandler.handleAudioError(error, trackId);
+        });
+      }
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);

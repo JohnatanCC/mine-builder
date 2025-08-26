@@ -12,6 +12,7 @@ import {
 import { exportWorldJSON, handleImportFile } from "@/systems/world/serializer";
 import { useWorld } from "@/state/world.store";
 import { useThemeContext } from "@/ui/theme/ThemeProvider";
+import { HOTKEYS, isHotkey, hasModifier } from "@/core/keys";
 
 // Evitamos selectors que retornem objetos/tuplas.
 // Seletores simples -> sem "getSnapshot should be cached" e sem loops.
@@ -26,11 +27,10 @@ export const CommandMenu: React.FC = () => {
   const undo = useWorld((s) => s.undo);
   const redo = useWorld((s) => s.redo);
 
-  // abrir via Ctrl+K / ⌘K
+  // abrir via Ctrl+K / ⌘K usando hotkeys centralizadas
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toLowerCase().includes("mac");
-      if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (hasModifier(e, 'CTRL') && isHotkey(e, HOTKEYS.COMMAND_MENU)) {
         e.preventDefault();
         setOpen((v) => !v);
       }

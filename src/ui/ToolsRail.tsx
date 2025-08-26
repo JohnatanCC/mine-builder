@@ -2,8 +2,7 @@
 import * as React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon } from "lucide-react";
-import { PiMouseLeftClickFill, PiMouseRightClickFill } from "react-icons/pi";
+import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw } from "lucide-react";
 import { useWorld } from "@/state/world.store";
 import type { Mode } from "@/core/types";
 
@@ -11,29 +10,56 @@ const isMode = (m: Mode, s: "place" | "delete" | "brush") => String(m) === s;
 const toMode = (s: "place" | "delete" | "brush") => s as unknown as Mode;
 
 const Tool: React.FC<React.PropsWithChildren<{
-  label: string; pressed?: boolean; onPressedChange?: (v: boolean) => void;
-}>> = ({ label, pressed, onPressedChange, children }) => (
-  <TooltipProvider delayDuration={200}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Toggle
-          aria-label={label}
-          pressed={pressed}
-          onPressedChange={onPressedChange}
-          className={[
-            "mb-1 h-10 w-10 rounded-lg border bg-background/80 backdrop-blur",
-            "transition-transform duration-150 ease-out",
-            "data-[state=on]:bg-primary/15 data-[state=on]:text-primary",
-            pressed ? "scale-95 shadow-inner" : "hover:scale-98 active:scale-95",
-          ].join(" ")}
-        >
-          {children}
-        </Toggle>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="text-xs">{label}</TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+  label: string; 
+  pressed?: boolean; 
+  onPressedChange?: (v: boolean) => void;
+  disabled?: boolean;
+  variant?: "default" | "destructive" | "success" | "rotation";
+  shortcut?: string;
+}>> = ({ label, pressed, onPressedChange, disabled, variant = "default", shortcut, children }) => {
+  const variantClasses = {
+    default: "data-[state=on]:bg-primary/15 data-[state=on]:text-primary",
+    destructive: "data-[state=on]:bg-red-100 data-[state=on]:text-red-700 hover:bg-red-50",
+    success: "data-[state=on]:bg-green-100 data-[state=on]:text-green-700 hover:bg-green-50",
+    rotation: "data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 hover:bg-blue-50"
+  };
+
+  const displayLabel = shortcut ? `${label} (${shortcut})` : label;
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Toggle
+            aria-label={label}
+            pressed={pressed}
+            onPressedChange={onPressedChange}
+            disabled={disabled}
+            className={[
+              "h-9 w-9 rounded-md border bg-background/90 backdrop-blur",
+              "transition-all duration-200 ease-out shadow-sm relative",
+              variantClasses[variant],
+              disabled 
+                ? "opacity-40 cursor-not-allowed" 
+                : pressed 
+                  ? "scale-95 shadow-inner border-primary/30 ring-2 ring-primary/20" 
+                  : "hover:scale-105 hover:shadow-md active:scale-95 border-border/50 hover:border-primary/20",
+            ].join(" ")}
+          >
+            {children}
+            {/* Indicador visual para ferramentas ativas */}
+            {pressed && (
+              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-background" />
+            )}
+          </Toggle>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs font-medium">
+          {displayLabel}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 export const ToolsRail: React.FC = () => {
   const mode = useWorld(s => s.mode);
@@ -51,85 +77,197 @@ export const ToolsRail: React.FC = () => {
   const env = useWorld(s => s.envPreset);
   const cycleEnv = useWorld(s => s.cycleEnvPreset);
 
+  const rotateBlockHorizontal = useWorld(s => s.rotateBlockHorizontal);
+  const rotateBlockVertical = useWorld(s => s.rotateBlockVertical);
+  const currentRotation = useWorld(s => s.currentRotation);
+
   const effectiveBrush = isCtrlDown || isMode(mode, "brush");
 
   const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
-  const envLabel = env === "day" ? "Céu: Dia (alternar)" : env === "dusk" ? "Céu: Tarde (alternar)" : "Céu: Noite (alternar)";
+  const envLabel = env === "day" ? "Céu: Dia" : env === "dusk" ? "Céu: Tarde" : "Céu: Noite";
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== document.body) return; // Evita conflito com inputs
+      
+      switch (e.key.toLowerCase()) {
+        case 'q':
+          e.preventDefault();
+          setMode(toMode("place"));
+          break;
+        case 'w':
+          e.preventDefault();
+          setMode(toMode("delete"));
+          break;
+        case 'e':
+          e.preventDefault();
+          setMode(toMode("brush"));
+          break;
+        case 'r':
+          e.preventDefault();
+          rotateBlockHorizontal();
+          break;
+        case 't':
+          e.preventDefault();
+          rotateBlockVertical();
+          break;
+        case 'g':
+          e.preventDefault();
+          setShowWire(!showWire);
+          break;
+        case 'f':
+          e.preventDefault();
+          cycleEnv();
+          break;
+        case 'z':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            if (canUndo) undo();
+          }
+          break;
+        case 'y':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            if (canRedo) redo();
+          }
+          break;
+      }
+    };
 
-  const ModeChip: React.FC = () => (
-    <div className="mt-1 mb-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none">
-      <span className={`inline-block h-2 w-2 rounded-full ${isMode(mode, "place") ? "bg-emerald-500"
-          : isMode(mode, "delete") ? "bg-rose-500"
-            : "bg-sky-500"
-        }`} />
-      <span className="uppercase tracking-wide">
-        {isMode(mode, "place") ? "Colocar"
-          : isMode(mode, "delete") ? "Remover"
-            : "Pincel"}
-        {isCtrlDown && " (Ctrl)"}
-      </span>
-    </div>
-  );
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [setMode, showWire, setShowWire, cycleEnv, canUndo, undo, canRedo, redo, rotateBlockHorizontal, rotateBlockVertical]);
 
   return (
-    <div className="flex gap-1 flex-col items-center rounded-sm border bg-card/90 p-1 shadow-lg">
-      <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center"><kbd className="rounded bg-muted px-1 mr-1"><PiMouseLeftClickFill /></kbd> Coloca</span>
-        <span className="flex items-center"><kbd className="rounded bg-muted px-1 mr-1"><PiMouseRightClickFill /></kbd> Remove</span>
-        <span className="flex items-center"><kbd className="rounded bg-muted px-1 mr-1">Ctrl</kbd> Pincel</span>
+    <div className="flex items-center gap-4 rounded-lg border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
+      {/* Indicador de modo compacto */}
+      <div className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium ${
+        isMode(mode, "place") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+        isMode(mode, "delete") ? "bg-rose-50 text-rose-700 border-rose-200" :
+        "bg-sky-50 text-sky-700 border-sky-200"
+      }`}>
+        <span className={`h-2.5 w-2.5 rounded-full ${
+          isMode(mode, "place") ? "bg-emerald-500" :
+          isMode(mode, "delete") ? "bg-rose-500" :
+          "bg-sky-500"
+        }`} />
+        <span className="uppercase tracking-wide">
+          {isMode(mode, "place") ? "Colocar" : isMode(mode, "delete") ? "Remover" : "Pincel"}
+        </span>
       </div>
 
-      {/* Indicador persistente de modo */}
-      <ModeChip />
+      {/* Divisor */}
+      <div className="h-7 w-px bg-border/50" />
 
-      <div className="flex flex-row items-center justify-center gap-1">
+      {/* Ferramentas principais - horizontal */}
+      <div className="flex items-center gap-1.5">
         <Tool
-          label="Colocar (LMB)"
+          label="Modo Colocar"
           pressed={isMode(mode, "place")}
           onPressedChange={(v) => v && setMode(toMode("place"))}
+          variant="success"
+          shortcut="Q"
         >
           <Square className="h-4 w-4" />
         </Tool>
 
         <Tool
-          label="Remover (RMB)"
+          label="Modo Remover"
           pressed={isMode(mode, "delete")}
           onPressedChange={(v) => v && setMode(toMode("delete"))}
+          variant="destructive"
+          shortcut="W"
         >
           <Eraser className="h-4 w-4" />
         </Tool>
 
         <Tool
-          label="Pincel (Ctrl+Arrastar)"
+          label="Modo Pincel"
           pressed={effectiveBrush}
           onPressedChange={(v) => v && setMode(toMode("brush"))}
+          shortcut="E"
         >
           <Brush className="h-4 w-4" />
         </Tool>
+      </div>
 
-        <div className="my-2 h-px w-4 bg-border/70" />
+      {/* Divisor */}
+      <div className="h-7 w-px bg-border/50" />
 
-        <Tool label="Desfazer (Ctrl+Z)" onPressedChange={() => canUndo && undo()}>
+      {/* Ferramentas de rotação */}
+      <div className="flex items-center gap-1.5">
+        <Tool
+          label="Rotação Horizontal"
+          onPressedChange={rotateBlockHorizontal}
+          variant="rotation"
+          shortcut="R"
+        >
+          <RotateCw className="h-4 w-4" />
+        </Tool>
+
+        <Tool
+          label="Rotação Vertical"
+          onPressedChange={rotateBlockVertical}
+          variant="rotation"
+          shortcut="T"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Tool>
+
+        {/* Indicador de rotação atual */}
+        <div className="flex flex-col items-center text-xs text-muted-foreground ml-2">
+          <div className="font-mono text-[10px] leading-tight">
+            X:{currentRotation?.x || 0}°
+          </div>
+          <div className="font-mono text-[10px] leading-tight">
+            Y:{currentRotation?.y || 0}°
+          </div>
+        </div>
+      </div>
+
+      {/* Divisor */}
+      <div className="h-7 w-px bg-border/50" />
+
+      {/* Ações de histórico */}
+      <div className="flex items-center gap-1.5">
+        <Tool 
+          label="Desfazer" 
+          onPressedChange={() => canUndo && undo()}
+          disabled={!canUndo}
+          shortcut="Ctrl+Z"
+        >
           <Undo2 className="h-4 w-4" />
         </Tool>
-        <Tool label="Refazer (Ctrl+Y / Shift+Ctrl+Z)" onPressedChange={() => canRedo && redo()}>
+        <Tool 
+          label="Refazer" 
+          onPressedChange={() => canRedo && redo()}
+          disabled={!canRedo}
+          shortcut="Ctrl+Y"
+        >
           <Redo2 className="h-4 w-4" />
         </Tool>
+      </div>
 
-        <div className="my-2 h-px w-4 bg-border/70" />
+      {/* Divisor */}
+      <div className="h-7 w-px bg-border/50" />
 
-        {/* ⬇️ Grade/Wireframe: agora alterna o estado global */}
+      {/* Configurações */}
+      <div className="flex items-center gap-1.5">
         <Tool
-          label={showWire ? "Wireframe: ON" : "Wireframe: OFF"}
+          label="Wireframe"
           pressed={showWire}
           onPressedChange={() => setShowWire(!showWire)}
+          shortcut="G"
         >
           <Grid3X3 className="h-4 w-4" />
         </Tool>
 
-        {/* ⬇️ Substitui a ferramenta de seleção: alterna Dia/Tarde/Noite */}
-        <Tool label={envLabel} onPressedChange={cycleEnv}>
+        <Tool 
+          label={envLabel} 
+          onPressedChange={cycleEnv}
+          shortcut="F"
+        >
           <EnvIcon className="h-4 w-4" />
         </Tool>
       </div>

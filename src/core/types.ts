@@ -35,8 +35,42 @@ export type BlockType =
   | "lime_concrete"
   | "magenta_concrete"
   | "brown_concrete";
+
+export type BlockVariant = "block" | "stairs" | "slab" | "fence" | "panel";
+
+export type BlockRotation = {
+  x: number; // 0, 90, 180, 270 (rotação em X - horizontal)
+  y: number; // 0, 90, 180, 270 (rotação em Y - vertical)
+  z: number; // 0, 90, 180, 270 (rotação em Z - profundidade)
+};
+
 export type Mode = "place" | "delete";
 export type Pos = [number, number, number];
-export type BlockData = { type: BlockType };
+export type BlockData = { 
+  type: BlockType;
+  variant?: BlockVariant;
+  rotation?: BlockRotation;
+};
 
 export type EnvPreset = "day" | "dusk" | "night";
+
+// Tipos para snapshot/serialização
+export interface Voxel {
+  x: number;
+  y: number;
+  z: number;
+  type: BlockType;
+}
+
+export interface WorldSnapshot {
+  blocks: Voxel[];
+}
+
+// Tipos para materiais Three.js
+export interface MaterialProperties {
+  transparent?: boolean;
+  opacity?: number;
+  depthWrite?: boolean;
+  alphaTest?: number;
+  envMapIntensity?: number;
+}

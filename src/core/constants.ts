@@ -19,8 +19,8 @@ export const PIXEL_FILTERS = {
  * leftWidth é apenas a barra de ferramentas (72px fixos).
  */
 export const UI_SHELL = {
-  leftWidth: 380,   // toolbar de ícones
-  rightWidth: 320, // inspector
+  leftWidth: 340,   // toolbar de ícones  
+  rightWidth: 300, // inspector
   topHeight: 40,
   bottomHeight: 84,
 } as const;

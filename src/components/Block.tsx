@@ -4,17 +4,29 @@ import * as React from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { getMaterialFor } from '../core/materials';
 import { key } from '../core/keys';
-import type { BlockType, Pos } from '../core/types';
+import type { BlockType, Pos, MaterialProperties, BlockVariant, BlockRotation } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
 import { getBlockMaterialsCached } from '@/systems/textures/blockTextures';
 import { decideAction } from '@/systems/input/placement';
 import { ANIM } from '@/core/constants';
 import { easeOutCubic, normTime } from '@/core/anim';
+import { VariantBlock } from './VariantBlock';
 
 const BRUSH_INTERVAL_MS = 22; // ~45 Hz
 
-export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
+// Função helper para aplicar propriedades de material de forma type-safe
+function applyMaterialProperties(material: THREE.Material, properties: MaterialProperties): void {
+  const mat = material as THREE.Material & MaterialProperties;
+  Object.assign(mat, properties);
+}
+
+export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z: 0 } }: { 
+  pos: Pos; 
+  type: BlockType; 
+  variant?: BlockVariant;
+  rotation?: BlockRotation;
+}) {
   const setBlock = useWorld((s) => s.setBlock);
   const removeBlock = useWorld((s) => s.removeBlock);
   const hasBlock = useWorld((s) => s.hasBlock);
@@ -80,7 +92,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       setBlock(p, current);
       strokeVisitedPlace.current.add(k);
 
-      // (opcional) se quiser o “ghost” também ao colocar, descomente:
+      // (opcional) se quiser o "ghost" também ao colocar, descomente:
       // if (useWorld.getState().blockAnimEnabled) {
       //   addRemoveEffect(p, current, ANIM.duration);
       // }
@@ -276,17 +288,22 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   const materialToUse = React.useMemo(() => {
     const tune = (m: THREE.Material) => {
       if (type === 'glass') {
-        (m as any).transparent = true;
-        (m as any).opacity = 0.86;
-        (m as any).depthWrite = false;
+        applyMaterialProperties(m, {
+          transparent: true,
+          opacity: 0.86,
+          depthWrite: false
+        });
         return;
       }
       if (type === 'oak_leaves' || type === 'spruce_leaves' || type === 'birch_leaves') {
-        (m as any).transparent = true;
-        (m as any).alphaTest = 0.25;
-        (m as any).depthWrite = true;
-        (m as any).alphaToCoverage = true;
-        (m as any).side = THREE.DoubleSide;
+        applyMaterialProperties(m, {
+          transparent: true,
+          alphaTest: 0.25,
+          depthWrite: true
+        });
+        const matAny = m as any; // Propriedades específicas do Three.js não tipadas
+        matAny.alphaToCoverage = true;
+        matAny.side = THREE.DoubleSide;
       }
     };
 
@@ -309,14 +326,11 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1, 1, 1]} />
-        {Array.isArray(materialToUse)
-          ? materialToUse.map((m, i) => (
-            <primitive key={i} object={m} attach={`material-${i}`} />
-          ))
-          : <primitive object={materialToUse as THREE.Material} attach="material" />}
-      </mesh>
+      <VariantBlock 
+        variant={variant}
+        rotation={rotation}
+        materials={materialToUse}
+      />
     </group>
   );
 }

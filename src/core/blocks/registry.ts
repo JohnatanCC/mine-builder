@@ -43,7 +43,7 @@ function loadPreviewTextureFromFolder(type: BlockType): THREE.Texture {
   return makePlaceholderTex();
 }
 
-export const REGISTRY: Record<BlockType, BlockDef> = {
+export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.freeze({
   // pedras
   stone: {
     id: "stone",
@@ -265,7 +265,7 @@ export const REGISTRY: Record<BlockType, BlockDef> = {
     preview: () => loadPreviewTextureFromFolder("birch_leaves"),
   },
 
-};
+} as const);
 
 // Lista ordenada para hotbar (ajuste como quiser)
 export const BLOCKS_ORDER: BlockType[] = [

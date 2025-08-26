@@ -37,11 +37,23 @@ const COLOR: Partial<Record<BlockType, number>> = {
   glass: 0xaed4ff,
 
   brick: 0xb74f3c
-
 };
 
+// Cache de materiais para evitar criação excessiva e memory leaks
+const materialCache = new Map<string, THREE.Material>();
+
+function getCachedMaterial(key: string, factory: () => THREE.Material): THREE.Material {
+  if (!materialCache.has(key)) {
+    materialCache.set(key, factory());
+  }
+  return materialCache.get(key)!;
+}
+
 function solidColor(hex: number, extra?: Partial<THREE.MeshStandardMaterialParameters>) {
-  return new THREE.MeshStandardMaterial({ color: hex, ...COMMON, ...extra });
+  const key = `solid_${hex}_${JSON.stringify(extra || {})}`;
+  return getCachedMaterial(key, () => 
+    new THREE.MeshStandardMaterial({ color: hex, ...COMMON, ...extra })
+  );
 }
 
 export function getMaterialFor(type: BlockType): THREE.Material | THREE.Material[] {
@@ -60,4 +72,24 @@ export function getMaterialFor(type: BlockType): THREE.Material | THREE.Material
 
   // Para a maioria dos blocos retornamos um material único (todas as faces)
   return solidColor(hex);
+}
+
+/**
+ * Limpa o cache de materiais (útil para testes ou limpeza de memória)
+ */
+export function clearMaterialCache(): void {
+  for (const material of materialCache.values()) {
+    material.dispose();
+  }
+  materialCache.clear();
+}
+
+/**
+ * Retorna estatísticas do cache de materiais
+ */
+export function getMaterialCacheStats(): { size: number; keys: string[] } {
+  return {
+    size: materialCache.size,
+    keys: Array.from(materialCache.keys())
+  };
 }

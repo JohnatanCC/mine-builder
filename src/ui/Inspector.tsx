@@ -15,7 +15,6 @@ import {
 import { loadSlot, saveSlot, clearSlot, listSlots, saveAuto, loadAuto, applySnapshot } from "@/systems/localSaves";
 import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -23,8 +22,8 @@ import {
 
 /* ----------------- UI helpers ----------------- */
 const Row: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
-  <div className="flex items-center justify-between gap-3 py-1">
-    <Label className="text-[11px] text-muted-foreground">{label}</Label>
+  <div className="flex items-center justify-between py-1.5">
+    <Label className="text-sm">{label}</Label>
     <div className="flex items-center gap-2">{children}</div>
   </div>
 );
@@ -124,150 +123,149 @@ export const Inspector: React.FC = () => {
     toast(`♻️ Auto‑save restaurado — ${fmt(auto.updatedAt)}`);
   }, []);
 
-  // Slot row
+  // Slot row simplificado
   const SlotRow: React.FC<{ n: number; ts?: number }> = ({ n, ts }) => (
-    <div className="flex items-center justify-between rounded-md border bg-card/50 px-2.5 py-2">
-      <div className="min-w-0">
-        <div className="text-xs font-medium leading-none">Slot {n}</div>
-        <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-          {ts ? `Último: ${fmt(ts)}` : "Vazio"}
-        </div>
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm">Slot {n}</span>
+        {ts && <div className="h-1.5 w-1.5 rounded-full bg-green-500" />}
       </div>
-      <div className="ml-2 flex items-center gap-1">
-        <Button size="sm" variant="secondary" className="h-7" onClick={() => loadFromSlot(n)}>
+      <div className="flex items-center gap-2">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => loadFromSlot(n)}
+          disabled={!ts}
+        >
           Carregar
         </Button>
-        <Button size="sm" className="h-7" onClick={() => saveToSlot(n)}>
+        <Button size="sm" onClick={() => saveToSlot(n)}>
           Salvar
         </Button>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => clearSlotUI(n)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Apagar slot</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button 
+          size="sm" 
+          variant="ghost" 
+          onClick={() => clearSlotUI(n)}
+          disabled={!ts}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
 
-  // Auto row
+  // Auto row simplificado
   const AutoRow: React.FC = () => (
-    <div className="flex items-center justify-between rounded-md border bg-muted/40 px-2.5 py-2">
-      <div className="min-w-0">
-        <div className="text-xs font-medium leading-none">Auto (restauração)</div>
-        <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-          {autoMeta ? `Último: ${fmt(autoMeta.updatedAt)}` : "ainda não realizado"}
-        </div>
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm">Auto-save</span>
+        <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+        {autoMeta && <span className="text-xs text-muted-foreground">{fmt(autoMeta.updatedAt)}</span>}
       </div>
-      <div className="ml-2 flex items-center gap-1">
-        <Button size="sm" variant="secondary" className="h-7" onClick={restoreAuto}>
-          <RotateCcw className="mr-1 h-4 w-4" /> Carregar
+      <div className="flex items-center gap-2">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={restoreAuto}
+          disabled={!autoMeta}
+        >
+          <RotateCcw className="h-4 w-4" />
         </Button>
-        {saving ? (
-          <span className="inline-flex items-center gap-1 rounded bg-card px-2 py-1 text-[11px]">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Salvando…
-          </span>
-        ) : null}
+        {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
       </div>
     </div>
   );
 
   return (
     <div className="h-full w-full">
-      {/* Header do painel */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card/80 px-3 py-2 text-sm font-semibold backdrop-blur">
-        <span>Inspector</span>
+      {/* Header simples */}
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-medium">Inspector</h2>
       </div>
 
-      {/* Conteúdo */}
-      <div className="p-2">
+      {/* Conteúdo minimalista */}
+      <div className="p-4">
         <Accordion
           type="multiple"
-          defaultValue={["light", "audio", "slots"]}
+          defaultValue={["render", "audio", "world"]}
           className="w-full"
         >
+          {/* Renderização */}
+          <AccordionItem value="render" className="border-b">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <span className="text-sm font-medium">Renderização</span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <Row label="Predefinição">
+                <Select value={renderPreset} onValueChange={(v) => setRenderPreset(v as any)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="quality">Qualidade</SelectItem>
+                    <SelectItem value="performance">Performance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Row>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Áudio */}
-          <AccordionItem value="audio">
-            <AccordionTrigger>Áudio</AccordionTrigger>
-            <AccordionContent className="pt-0">
+          <AccordionItem value="audio" className="border-b">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <span className="text-sm font-medium">Áudio</span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
               <Row label="Música ambiente">
                 <Switch checked={audioEnabled} onCheckedChange={setAudioEnabled} />
-                <span className="text-[11px] text-muted-foreground w-8 text-right">
-                  {audioEnabled ? "ON" : "OFF"}
-                </span>
               </Row>
 
-              <Row label="Trilha">
+              <Row label="Trilha atual">
                 <Select
                   value={currentTrack || ""}
                   onValueChange={(v) => setCurrentTrack(v)}
+                  disabled={!audioEnabled}
                 >
-                  <SelectTrigger className="w-44 h-7">
-                    <SelectValue placeholder="(nenhuma)" />
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Nenhuma" />
                   </SelectTrigger>
                   <SelectContent>
                     {hasTracks
                       ? tracks.map((id: string) => (
                         <SelectItem key={id} value={id}>{id}</SelectItem>
                       ))
-                      : <SelectItem value="">(nenhuma encontrada)</SelectItem>}
+                      : <SelectItem value="">Nenhuma</SelectItem>}
                   </SelectContent>
                 </Select>
               </Row>
 
               <Row label="Volume">
-                <Slider
-                  value={[vol]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  className="w-40"
-                  disabled={!audioEnabled || !hasTracks}
-                  onValueChange={([v]) => setVol(v)}
-                  onValueCommit={([v]) => setAudioVolume(v)}
-                />
-                <span className="w-10 text-right tabular-nums text-[11px] text-muted-foreground">
-                  {(vol * 100) | 0}%
-                </span>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[vol]}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    className="w-24"
+                    disabled={!audioEnabled || !hasTracks}
+                    onValueChange={([v]) => setVol(v)}
+                    onValueCommit={([v]) => setAudioVolume(v)}
+                  />
+                  <span className="w-10 text-xs tabular-nums">
+                    {(vol * 100) | 0}%
+                  </span>
+                </div>
               </Row>
             </AccordionContent>
           </AccordionItem>
 
-          {/* <AccordionItem value="terrain">
-            <AccordionTrigger>Terreno</AccordionTrigger>
-            <AccordionContent className="pt-0">
-              <TerrainPanel />
-            </AccordionContent>
-          </AccordionItem> */}
-
-          <AccordionItem value="light">
-            <AccordionTrigger>Luz / Sombras</AccordionTrigger>
-            <AccordionContent className="pt-0">
-
-              <Row label="Pré-definição">
-                <Select value={renderPreset} onValueChange={(v) => setRenderPreset(v as any)}>
-                  <SelectTrigger className="h-7 w-44">
-                    <SelectValue placeholder="Qualidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="quality">Qualidade</SelectItem>
-                    <SelectItem value="performance">Desempenho</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Row>
-
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Mundo / Slots */}
-          <AccordionItem value="slots">
-            <AccordionTrigger>Mundo / Slots</AccordionTrigger>
-            <AccordionContent className="pt-1">
-              <div className="flex flex-col gap-2">
+          {/* Mundo e Salvamento */}
+          <AccordionItem value="world" className="border-b">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <span className="text-sm font-medium">Mundo & Salvamento</span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <div className="space-y-1">
                 <AutoRow />
                 {slots.map(({ slot, meta }) => (
                   <SlotRow key={slot} n={slot} ts={meta?.updatedAt} />
@@ -276,7 +274,8 @@ export const Inspector: React.FC = () => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="mt-3 w-full">
+                  <Button variant="destructive" size="sm" className="mt-4 w-full">
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Limpar mundo
                   </Button>
                 </AlertDialogTrigger>

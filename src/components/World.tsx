@@ -7,7 +7,13 @@ export function World() {
   return (
     <>
       {Array.from(blocks.entries()).map(([k, data]) => (
-        <Block key={k} pos={parseKey(k)} type={data.type} />
+        <Block 
+          key={k} 
+          pos={parseKey(k)} 
+          type={data.type} 
+          variant={data.variant || "block"}
+          rotation={data.rotation || { x: 0, y: 0, z: 0 }}
+        />
       ))}
     </>
   );

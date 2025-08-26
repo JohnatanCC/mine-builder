@@ -23,30 +23,27 @@ export const AppShell: React.FC<Props> = ({
   const leftW = UI_SHELL.leftWidth;
   const rightW = UI_SHELL.rightWidth;
   return (
-    <div className="h-screen w-screen overflow-hidden text-foreground">
+    <div className="h-screen w-screen overflow-hidden text-foreground bg-background">
       <div
-        className="flex  items-center bg-background"
+        className="flex items-center bg-background border-b"
         style={{ height: topH }}
       >
-        <div className="w-full px-2">{topBar}</div>
+        <div className="w-full">{topBar}</div>
       </div>
       <div
         className="grid"
         style={{
-          height: `100vh`,
+          height: `calc(100vh - ${topH}px)`,
           gridTemplateColumns: `${leftW}px 1fr ${rightW}px`,
         }}
       >
         <aside className="border-r bg-card">
           <div className="h-full overflow-y-auto">{left}</div>
         </aside>
-        <main className="app-center-bg-transparent relative h-full w-full">
+        <main className="relative h-full w-full">
           {children}
           {toolsOverlay && (
-            <div
-              className="absolute left-3 top-3 z-30"
-
-            >
+            <div className="absolute left-4 top-4 z-30">
               {toolsOverlay}
             </div>
           )}

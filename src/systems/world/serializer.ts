@@ -1,12 +1,25 @@
 // UPDATE: src/systems/serializer.ts
 import { useWorld } from "@/state/world.store";
 import { toast } from "sonner";
+import type { WorldSnapshot } from "@/core/types";
 
-const SUPPORTED_VERSION = "0.2.0";
+// Versão atual da aplicação - atualizar a cada release
+const CURRENT_VERSION = "0.4.0";
 
 type ImportResult =
   | { ok: true; version: string }
   | { ok: false; code: "NOVERSION" | "INCOMPATIBLE" | "NOWORLD" | "PARSE"; detail?: string };
+
+type WorldSaveData = {
+  version: string;
+  timestamp: number;
+  world: WorldSnapshot;
+  metadata?: {
+    appVersion: string;
+    userAgent?: string;
+    platform?: string;
+  };
+};
 
 function parseVersion(v: string) {
   const [major, minor, patch] = v.split(".").map((n) => parseInt(n, 10) || 0);
@@ -14,24 +27,30 @@ function parseVersion(v: string) {
 }
 
 function isVersionCompatible(fileVersion: string): boolean {
-  const app = parseVersion(SUPPORTED_VERSION);
+  const app = parseVersion(CURRENT_VERSION);
   const file = parseVersion(fileVersion);
-  return file.major === app.major && file.minor === app.minor; // aceita 0.2.x
+  // Aceita versões da mesma major.minor (ex: 0.4.x)
+  return file.major === app.major && file.minor === app.minor;
 }
 
 /** Captura o snapshot atual do mundo via store */
 export function exportWorldJSON() {
-  const snapshot = useWorld.getState().getSnapshot(); // <- contrato novo
-  const data = {
-    version: SUPPORTED_VERSION,
+  const snapshot = useWorld.getState().getSnapshot();
+  const data: WorldSaveData = {
+    version: CURRENT_VERSION,
     timestamp: Date.now(),
     world: snapshot,
+    metadata: {
+      appVersion: CURRENT_VERSION,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+    },
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `mine-builder-world-${SUPPORTED_VERSION}.json`;
+  a.download = `mine-builder-world-${CURRENT_VERSION}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -67,7 +86,7 @@ export async function handleImportFile(file: File) {
   } else {
     const messages = {
       NOVERSION: "Arquivo inválido: faltam metadados de versão.",
-      INCOMPATIBLE: `Versão incompatível: aceite apenas ${SUPPORTED_VERSION.split(".").slice(0, 2).join(".")}.x`,
+      INCOMPATIBLE: `Versão incompatível: aceite apenas ${CURRENT_VERSION.split(".").slice(0, 2).join(".")}.x`,
       NOWORLD: "Arquivo inválido: não contém dados de mundo.",
       PARSE: "Erro ao ler o JSON.",
     } as const;

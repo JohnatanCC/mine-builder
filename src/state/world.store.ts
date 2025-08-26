@@ -3,6 +3,8 @@ import { create } from "zustand";
 import type {
   BlockType,
   BlockData,
+  BlockVariant,
+  BlockRotation,
   Mode,
   Pos,
   CameraMode,
@@ -32,6 +34,12 @@ export type WorldState = {
   // selection.slice
   current: BlockType;
   setCurrent: (t: BlockType) => void;
+  currentVariant: BlockVariant;
+  setCurrentVariant: (v: BlockVariant) => void;
+  currentRotation: BlockRotation;
+  setCurrentRotation: (r: BlockRotation) => void;
+  rotateBlockHorizontal: () => void;
+  rotateBlockVertical: () => void;
   mode: Mode;
   setMode: (m: Mode) => void;
 
@@ -179,6 +187,12 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     // selection
     current: S.current!,
     setCurrent: S.setCurrent!,
+    currentVariant: S.currentVariant!,
+    setCurrentVariant: S.setCurrentVariant!,
+    currentRotation: S.currentRotation!,
+    setCurrentRotation: S.setCurrentRotation!,
+    rotateBlockHorizontal: S.rotateBlockHorizontal!,
+    rotateBlockVertical: S.rotateBlockVertical!,
     mode: S.mode!,
     setMode: S.setMode!,
 
