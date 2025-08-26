@@ -3,7 +3,7 @@ import { useWorld } from "@/state/world.store";
 import { BlockIcon } from "@/ui/BlockIcon";
 import { getLabel, REGISTRY } from "@/core/blocks/registry";
 import { Button } from "@/components/ui/button";
-import { Package, MoveUp, Minimize2 } from "lucide-react";
+import { Package, MoveUp, Minimize2, Fence, RectangleVertical } from "lucide-react";
 import type { BlockVariant } from "@/core/types";
 import {
   Tooltip,
@@ -27,6 +27,16 @@ const VARIANT_CONFIG = {
     icon: Minimize2,
     label: "Laje",
     description: "Bloco em formato de laje"
+  },
+  fence: {
+    icon: Fence,
+    label: "Cerca",
+    description: "Bloco em formato de cerca"
+  },
+  panel: {
+    icon: RectangleVertical,
+    label: "Painel",
+    description: "Bloco em formato de painel"
   }
 } as const;
 

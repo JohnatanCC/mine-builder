@@ -36,7 +36,7 @@ export type BlockType =
   | "magenta_concrete"
   | "brown_concrete";
 
-export type BlockVariant = "block" | "stairs" | "slab";
+export type BlockVariant = "block" | "stairs" | "slab" | "fence" | "panel";
 
 export type BlockRotation = {
   x: number; // 0, 90, 180, 270 (rotação em X - horizontal)

@@ -1,13 +1,14 @@
-# ✅ Implementações de Variações de Blocos v0.4.1
+# ✅ Implementações de Variações de Blocos v0.4.2
 
 ## 🎯 **RECURSOS IMPLEMENTADOS**
 
 ### **📦 1. Sistema de Variações de Blocos**
-- ✅ **Tipos de Variações:** Bloco, Escada, Laje
-- ✅ **Interface de Seleção:** 3 botões no componente SelectedBlock
-- ✅ **Ícones Lucide:** Box (bloco), Layers3 (escada), Square (laje)
+- ✅ **Tipos de Variações:** Bloco, Escada, Laje, Cerca, Painel
+- ✅ **Interface de Seleção:** 5 botões no componente SelectedBlock
+- ✅ **Ícones Lucide:** Package (bloco), MoveUp (escada), Minimize2 (laje), Fence (cerca), RectangleVertical (painel)
 - ✅ **Estado Global:** currentVariant no store
 - ✅ **Geometrias 3D:** Diferentes formas para cada variação
+- ✅ **Highlight Atualizado:** Preview visual das variações
 
 ### **🔄 2. Sistema de Rotação de Blocos**
 - ✅ **Rotação Horizontal (Y):** 0°, 90°, 180°, 270°
@@ -48,7 +49,7 @@
 
 ### **Tipos TypeScript:**
 ```typescript
-export type BlockVariant = "block" | "stairs" | "slab";
+export type BlockVariant = "block" | "stairs" | "slab" | "fence" | "panel";
 
 export type BlockRotation = {
   x: number; // 0, 90, 180, 270
@@ -67,6 +68,8 @@ export type BlockData = {
 - **Bloco:** Cubo completo 1x1x1
 - **Escada:** Laje (1x0.5x1) + Degrau (1x0.5x0.5)
 - **Laje:** Cubo achatado 1x0.5x1
+- **Cerca:** Poste central (0.125x1x0.125) + 2 barras horizontais (0.9x0.125x0.125)
+- **Painel:** Painel fino 1x1x0.125
 
 ### **Sistema de Rotação:**
 - **Horizontal (Y):** Rotaciona o bloco no plano XZ

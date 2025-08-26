@@ -3,12 +3,12 @@ import { create } from "zustand";
 import type {
   BlockType,
   BlockData,
+  BlockVariant,
+  BlockRotation,
   Mode,
   Pos,
   CameraMode,
   EnvPreset,
-  BlockVariant,
-  BlockRotation,
 } from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
@@ -28,7 +28,6 @@ export type WorldState = {
   setBlock: (pos: Pos, type: BlockType) => void;
   removeBlock: (pos: Pos) => void;
   hasBlock: (pos: Pos) => boolean;
-  getBlock: (pos: Pos) => BlockData | null;
   setBlockSilent: (pos: Pos, type: BlockType) => void;
   removeBlockSilent: (pos: Pos) => void;
 
@@ -165,9 +164,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     if (!snap || !Array.isArray(snap.blocks)) return;
     const next = new Map<string, BlockData>();
     for (const v of snap.blocks) {
-      // Support for legacy snapshots without variants
-      const variant = (v as any).variant || "block";
-      next.set(makeKey(v.x, v.y, v.z), { type: v.type, variant } as BlockData);
+      next.set(makeKey(v.x, v.y, v.z), { type: v.type } as BlockData);
     }
     set({
       blocks: next,
@@ -184,7 +181,6 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     setBlock: S.setBlock!,
     removeBlock: S.removeBlock!,
     hasBlock: S.hasBlock!,
-    getBlock: S.getBlock!,
     setBlockSilent: S.setBlockSilent!,
     removeBlockSilent: S.removeBlockSilent!,
 

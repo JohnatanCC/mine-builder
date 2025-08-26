@@ -4,13 +4,14 @@ import * as React from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { getMaterialFor } from '../core/materials';
 import { key } from '../core/keys';
-import type { BlockType, Pos, MaterialProperties } from '../core/types';
+import type { BlockType, Pos, MaterialProperties, BlockVariant, BlockRotation } from '../core/types';
 import { useWorld } from '../state/world.store';
 import { useClickGuard } from '../systems/input/useClickGuard';
 import { getBlockMaterialsCached } from '@/systems/textures/blockTextures';
 import { decideAction } from '@/systems/input/placement';
 import { ANIM } from '@/core/constants';
 import { easeOutCubic, normTime } from '@/core/anim';
+import { VariantBlock } from './VariantBlock';
 
 const BRUSH_INTERVAL_MS = 22; // ~45 Hz
 
@@ -20,14 +21,18 @@ function applyMaterialProperties(material: THREE.Material, properties: MaterialP
   Object.assign(mat, properties);
 }
 
-export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
+export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z: 0 } }: { 
+  pos: Pos; 
+  type: BlockType; 
+  variant?: BlockVariant;
+  rotation?: BlockRotation;
+}) {
   const setBlock = useWorld((s) => s.setBlock);
   const removeBlock = useWorld((s) => s.removeBlock);
   const hasBlock = useWorld((s) => s.hasBlock);
 
   const current = useWorld((s) => s.current);
   const setCurrent = useWorld((s) => s.setCurrent);
-  const currentVariant = useWorld((s) => s.currentVariant);
 
   const mode = useWorld((s) => s.mode);
   const isCtrlDown = useWorld((s) => s.isCtrlDown);
@@ -41,10 +46,6 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   // animações
   const blockAnimEnabled = useWorld((s) => s.blockAnimEnabled);
   const addRemoveEffect = useWorld((s) => s.addRemoveEffect);
-
-  // Get block data from store to access variant
-  const blockData = useWorld((s) => s.blocks.get(key(...pos)));
-  const variant = blockData?.variant || "block";
 
   const idKey = React.useMemo(() => key(...pos), [pos]);
 
@@ -69,31 +70,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const computeAdjacentPos = (e: ThreeEvent<PointerEvent>): Pos => {
     const n = faceFromEvent(e);
-    const hitPoint = e.point as THREE.Vector3;
-    
-    if (n) {
-      // Tratamento especial para slabs - sempre permitir colocação em cima
-      if (variant === "slab" && n.y > 0) {
-        const localY = hitPoint.y - pos[1];
-        // Se clicou na parte superior da laje (acima do centro), colocar em cima
-        if (localY > 0) {
-          return [pos[0], pos[1] + 1, pos[2]];
-        }
-      }
-      
-      // Tratamento especial para escadas
-      if (variant === "stairs" && n.y > 0) {
-        const localHit = hitPoint.clone().sub(new THREE.Vector3(pos[0], pos[1], pos[2]));
-        // Se clicou na parte superior da escada, colocar em cima
-        if (localHit.y > 0.25) {
-          return [pos[0], pos[1] + 1, pos[2]];
-        }
-      }
-      
-      return computeAdjacentByNormal(n);
-    }
-    
-    return computeAdjacentFallback(e);
+    return n ? computeAdjacentByNormal(n) : computeAdjacentFallback(e);
   };
 
   // ===== Brush state =====
@@ -115,7 +92,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       setBlock(p, current);
       strokeVisitedPlace.current.add(k);
 
-      // (opcional) se quiser o “ghost” também ao colocar, descomente:
+      // (opcional) se quiser o "ghost" também ao colocar, descomente:
       // if (useWorld.getState().blockAnimEnabled) {
       //   addRemoveEffect(p, current, ANIM.duration);
       // }
@@ -349,72 +326,11 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
-      <BlockGeometry 
-        variant={variant} 
-        materialToUse={materialToUse}
-        rotation={blockData?.rotation}
+      <VariantBlock 
+        variant={variant}
+        rotation={rotation}
+        materials={materialToUse}
       />
     </group>
   );
 }
-
-// Componente separado para gerenciar as geometrias
-const BlockGeometry: React.FC<{
-  variant: string;
-  materialToUse: THREE.Material | THREE.Material[];
-  rotation?: { x: number; y: number; z: number };
-}> = ({ variant, materialToUse, rotation = { x: 0, y: 0, z: 0 } }) => {
-  const renderMaterials = () => {
-    if (Array.isArray(materialToUse)) {
-      return materialToUse.map((m, i) => (
-        <primitive key={i} object={m} attach={`material-${i}`} />
-      ));
-    }
-    return <primitive object={materialToUse as THREE.Material} attach="material" />;
-  };
-
-  // Converter rotações de graus para radianos
-  const rotationRadians = [
-    (rotation.x * Math.PI) / 180,
-    (rotation.y * Math.PI) / 180,
-    (rotation.z * Math.PI) / 180,
-  ] as [number, number, number];
-
-  switch (variant) {
-    case "stairs":
-      return (
-        <group rotation={rotationRadians}>
-          {/* Parte inferior da escada (laje) */}
-          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
-            <boxGeometry args={[1, 0.5, 1]} />
-            {renderMaterials()}
-          </mesh>
-          {/* Parte superior da escada (degrau) */}
-          <mesh castShadow receiveShadow position={[0, 0.25, -0.25]}>
-            <boxGeometry args={[1, 0.5, 0.5]} />
-            {renderMaterials()}
-          </mesh>
-        </group>
-      );
-
-    case "slab":
-      return (
-        <group rotation={rotationRadians}>
-          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
-            <boxGeometry args={[1, 0.5, 1]} />
-            {renderMaterials()}
-          </mesh>
-        </group>
-      );
-
-    default: // block
-      return (
-        <group rotation={rotationRadians}>
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[1, 1, 1]} />
-            {renderMaterials()}
-          </mesh>
-        </group>
-      );
-  }
-};
