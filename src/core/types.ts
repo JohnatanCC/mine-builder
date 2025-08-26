@@ -38,6 +38,13 @@ export type BlockType =
 
 export type BlockVariant = "block" | "stairs" | "slab" | "fence" | "panel";
 
+export type StairShape = 
+  | "straight"    // Escada reta
+  | "inner_left"  // Canto interno esquerdo
+  | "inner_right" // Canto interno direito
+  | "outer_left"  // Canto externo esquerdo  
+  | "outer_right"; // Canto externo direito
+
 export type BlockRotation = {
   x: number; // 0, 90, 180, 270 (rotação em X - horizontal)
   y: number; // 0, 90, 180, 270 (rotação em Y - vertical)
@@ -50,6 +57,7 @@ export type BlockData = {
   type: BlockType;
   variant?: BlockVariant;
   rotation?: BlockRotation;
+  shape?: StairShape; // Para escadas com formas especiais
 };
 
 export type EnvPreset = "day" | "dusk" | "night";

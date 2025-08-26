@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import type { WorldState } from "../world.store";
 import { key } from "../../core/keys";
 import { pushPastLimited, setRaw, removeRaw } from "../utils/store-helpers";
+import { calculateAutoRotation, getNeighborPositions } from "@/systems/world/connectivity";
 
 /** Aceita tanto tupla [x,y,z] quanto objeto {x,y,z} e retorna a key canônica */
 type Pos3 = Readonly<[number, number, number]> | { x: number; y: number; z: number };
@@ -25,9 +26,36 @@ export const createBlocksSlice: StateCreator<
     set((state) => {
       const k = keyFromPos(pos);
       if (state.blocks.has(k)) return {};
-      const blocks = setRaw(state, k, type);
+      
       const variant = state.currentVariant || "block";
-      const rotation = state.currentRotation || { x: 0, y: 0, z: 0 };
+      
+      // Calcula rotação automática baseada em conectividade
+      const autoResult = calculateAutoRotation(pos as any, type, variant, state as any);
+      
+      // Usa rotação automática apenas para cercas e painéis
+      const shouldUseAutoRotation = variant === "fence" || variant === "panel";
+      const rotation = shouldUseAutoRotation ? autoResult.rotation : (state.currentRotation || { x: 0, y: 0, z: 0 });
+      const shape = autoResult.shape || "straight";
+      
+      let blocks = setRaw(state, k, type, variant, rotation, shape);
+
+      // Atualiza vizinhos cercas/painéis quando qualquer bloco é colocado
+      const neighborPositions = getNeighborPositions(pos as any);
+      const updatedBlocks = new Map(blocks);
+      
+      for (const neighborPos of neighborPositions) {
+        const neighborKey = keyFromPos(neighborPos);
+        const neighborBlock = updatedBlocks.get(neighborKey);
+        
+        if (neighborBlock && (neighborBlock.variant === "fence" || neighborBlock.variant === "panel")) {
+          // Força atualização criando uma nova instância do bloco
+          updatedBlocks.set(neighborKey, {
+            ...neighborBlock
+          });
+        }
+      }
+      
+      blocks = updatedBlocks;
 
       if (state.currentStroke) {
         return {
@@ -47,7 +75,26 @@ export const createBlocksSlice: StateCreator<
       const k = keyFromPos(pos);
       const prev = state.blocks.get(k);
       if (!prev) return {};
-      const blocks = removeRaw(state, k);
+      
+      let blocks = removeRaw(state, k);
+
+      // Atualiza vizinhos cercas/painéis quando qualquer bloco é removido
+      const neighborPositions = getNeighborPositions(pos as any);
+      const updatedBlocks = new Map(blocks);
+      
+      for (const neighborPos of neighborPositions) {
+        const neighborKey = keyFromPos(neighborPos);
+        const neighborBlock = updatedBlocks.get(neighborKey);
+        
+        if (neighborBlock && (neighborBlock.variant === "fence" || neighborBlock.variant === "panel")) {
+          // Força atualização criando uma nova instância do bloco
+          updatedBlocks.set(neighborKey, {
+            ...neighborBlock
+          });
+        }
+      }
+      
+      blocks = updatedBlocks;
 
       if (state.currentStroke) {
         return {

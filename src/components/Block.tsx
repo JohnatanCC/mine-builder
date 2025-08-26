@@ -21,11 +21,12 @@ function applyMaterialProperties(material: THREE.Material, properties: MaterialP
   Object.assign(mat, properties);
 }
 
-export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z: 0 } }: { 
+export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z: 0 }, shape = "straight" }: { 
   pos: Pos; 
   type: BlockType; 
   variant?: BlockVariant;
   rotation?: BlockRotation;
+  shape?: import('@/core/types').StairShape;
 }) {
   const setBlock = useWorld((s) => s.setBlock);
   const removeBlock = useWorld((s) => s.removeBlock);
@@ -330,6 +331,8 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
         variant={variant}
         rotation={rotation}
         materials={materialToUse}
+        shape={shape}
+        pos={pos}
       />
     </group>
   );

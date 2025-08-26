@@ -13,6 +13,7 @@ export function World() {
           type={data.type} 
           variant={data.variant || "block"}
           rotation={data.rotation || { x: 0, y: 0, z: 0 }}
+          shape={data.shape || "straight"}
         />
       ))}
     </>
