@@ -22,6 +22,7 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
 }) => {
   const groupRef = React.useRef<THREE.Group>(null);
   const visualGroupRef = React.useRef<THREE.Group>(null);
+  const blocks = useWorld((state) => state.blocks); // Otimização: usar hook em vez de getState
 
   // Calcular conexões para cercas e painéis
   const getConnections = () => {
@@ -29,7 +30,6 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
       return { north: false, south: false, east: false, west: false };
     }
 
-    const blocks = useWorld.getState().blocks;
     const [x, y, z] = pos;
     
     const directions = [

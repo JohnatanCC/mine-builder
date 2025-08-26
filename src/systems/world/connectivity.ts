@@ -173,8 +173,8 @@ export function calculatePanelRotation(connections: ConnectionInfo): BlockRotati
  * baseado em seus vizinhos
  */
 export function calculateAutoRotation(
-  pos: Pos,
-  type: BlockType,
+  _pos: Pos,
+  _type: BlockType,
   variant: BlockVariant,
   state: WorldState
 ): { rotation: BlockRotation; shape?: StairShape } {
