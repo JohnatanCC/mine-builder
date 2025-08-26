@@ -38,7 +38,11 @@ export const createHistorySlice: StateCreator<
           blocks = removeRaw({ blocks }, op.key);
         } else {
           // op.kind === "remove"
-          blocks = setRaw({ blocks }, op.key, op.prev.type);
+          blocks = setRaw({ 
+            blocks, 
+            currentVariant: op.prev.variant,
+            currentRotation: op.prev.rotation 
+          }, op.key, op.prev.type);
         }
       };
 
@@ -66,7 +70,11 @@ export const createHistorySlice: StateCreator<
 
       const redoOp = (op: HistoryOp) => {
         if (op.kind === "place") {
-          blocks = setRaw({ blocks }, op.key, op.type);
+          blocks = setRaw({ 
+            blocks, 
+            currentVariant: op.variant,
+            currentRotation: op.rotation 
+          }, op.key, op.type);
         } else {
           // op.kind === "remove"
           blocks = removeRaw({ blocks }, op.key);

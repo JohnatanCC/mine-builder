@@ -7,6 +7,8 @@ import type {
   Pos,
   CameraMode,
   EnvPreset,
+  BlockVariant,
+  BlockRotation,
 } from "../core/types";
 import type { AmbientId } from "../audio/ambient";
 import type { HistoryItem, HistoryOp } from "./utils/types";
@@ -32,6 +34,12 @@ export type WorldState = {
   // selection.slice
   current: BlockType;
   setCurrent: (t: BlockType) => void;
+  currentVariant: BlockVariant;
+  setCurrentVariant: (v: BlockVariant) => void;
+  currentRotation: BlockRotation;
+  setCurrentRotation: (r: BlockRotation) => void;
+  rotateBlockHorizontal: () => void;
+  rotateBlockVertical: () => void;
   mode: Mode;
   setMode: (m: Mode) => void;
 
@@ -156,7 +164,9 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     if (!snap || !Array.isArray(snap.blocks)) return;
     const next = new Map<string, BlockData>();
     for (const v of snap.blocks) {
-      next.set(makeKey(v.x, v.y, v.z), { type: v.type } as BlockData);
+      // Support for legacy snapshots without variants
+      const variant = (v as any).variant || "block";
+      next.set(makeKey(v.x, v.y, v.z), { type: v.type, variant } as BlockData);
     }
     set({
       blocks: next,
@@ -179,6 +189,12 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     // selection
     current: S.current!,
     setCurrent: S.setCurrent!,
+    currentVariant: S.currentVariant!,
+    setCurrentVariant: S.setCurrentVariant!,
+    currentRotation: S.currentRotation!,
+    setCurrentRotation: S.setCurrentRotation!,
+    rotateBlockHorizontal: S.rotateBlockHorizontal!,
+    rotateBlockVertical: S.rotateBlockVertical!,
     mode: S.mode!,
     setMode: S.setMode!,
 

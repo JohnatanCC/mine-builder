@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon } from "lucide-react";
+import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw } from "lucide-react";
 import { useWorld } from "@/state/world.store";
 import type { Mode } from "@/core/types";
 
@@ -14,13 +14,17 @@ const Tool: React.FC<React.PropsWithChildren<{
   pressed?: boolean; 
   onPressedChange?: (v: boolean) => void;
   disabled?: boolean;
-  variant?: "default" | "destructive" | "success";
-}>> = ({ label, pressed, onPressedChange, disabled, variant = "default", children }) => {
+  variant?: "default" | "destructive" | "success" | "rotation";
+  shortcut?: string;
+}>> = ({ label, pressed, onPressedChange, disabled, variant = "default", shortcut, children }) => {
   const variantClasses = {
     default: "data-[state=on]:bg-primary/15 data-[state=on]:text-primary",
     destructive: "data-[state=on]:bg-red-100 data-[state=on]:text-red-700 hover:bg-red-50",
-    success: "data-[state=on]:bg-green-100 data-[state=on]:text-green-700 hover:bg-green-50"
+    success: "data-[state=on]:bg-green-100 data-[state=on]:text-green-700 hover:bg-green-50",
+    rotation: "data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 hover:bg-blue-50"
   };
+
+  const displayLabel = shortcut ? `${label} (${shortcut})` : label;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -33,20 +37,24 @@ const Tool: React.FC<React.PropsWithChildren<{
             disabled={disabled}
             className={[
               "h-9 w-9 rounded-md border bg-background/90 backdrop-blur",
-              "transition-all duration-200 ease-out shadow-sm",
+              "transition-all duration-200 ease-out shadow-sm relative",
               variantClasses[variant],
               disabled 
                 ? "opacity-40 cursor-not-allowed" 
                 : pressed 
-                  ? "scale-95 shadow-inner border-primary/30" 
+                  ? "scale-95 shadow-inner border-primary/30 ring-2 ring-primary/20" 
                   : "hover:scale-105 hover:shadow-md active:scale-95 border-border/50 hover:border-primary/20",
             ].join(" ")}
           >
             {children}
+            {/* Indicador visual para ferramentas ativas */}
+            {pressed && (
+              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-background" />
+            )}
           </Toggle>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs font-medium">
-          {label}
+          {displayLabel}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -69,10 +77,66 @@ export const ToolsRail: React.FC = () => {
   const env = useWorld(s => s.envPreset);
   const cycleEnv = useWorld(s => s.cycleEnvPreset);
 
+  const rotateBlockHorizontal = useWorld(s => s.rotateBlockHorizontal);
+  const rotateBlockVertical = useWorld(s => s.rotateBlockVertical);
+
   const effectiveBrush = isCtrlDown || isMode(mode, "brush");
 
   const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
-  const envLabel = env === "day" ? "Céu: Dia (alternar)" : env === "dusk" ? "Céu: Tarde (alternar)" : "Céu: Noite (alternar)";
+  const envLabel = env === "day" ? "Céu: Dia" : env === "dusk" ? "Céu: Tarde" : "Céu: Noite";
+
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== document.body) return; // Evita conflito com inputs
+      
+      switch (e.key.toLowerCase()) {
+        case 'q':
+          e.preventDefault();
+          setMode(toMode("place"));
+          break;
+        case 'w':
+          e.preventDefault();
+          setMode(toMode("delete"));
+          break;
+        case 'e':
+          e.preventDefault();
+          setMode(toMode("brush"));
+          break;
+        case 'r':
+          e.preventDefault();
+          rotateBlockHorizontal();
+          break;
+        case 't':
+          e.preventDefault();
+          rotateBlockVertical();
+          break;
+        case 'g':
+          e.preventDefault();
+          setShowWire(!showWire);
+          break;
+        case 'f':
+          e.preventDefault();
+          cycleEnv();
+          break;
+        case 'z':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            if (canUndo) undo();
+          }
+          break;
+        case 'y':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            if (canRedo) redo();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [setMode, showWire, setShowWire, cycleEnv, canUndo, undo, canRedo, redo, rotateBlockHorizontal, rotateBlockVertical]);
 
   return (
     <div className="flex items-center gap-4 rounded-lg border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
@@ -98,29 +162,56 @@ export const ToolsRail: React.FC = () => {
       {/* Ferramentas principais - horizontal */}
       <div className="flex items-center gap-1.5">
         <Tool
-          label="Modo Colocar (Clique Esquerdo)"
+          label="Modo Colocar"
           pressed={isMode(mode, "place")}
           onPressedChange={(v) => v && setMode(toMode("place"))}
           variant="success"
+          shortcut="Q"
         >
           <Square className="h-4 w-4" />
         </Tool>
 
         <Tool
-          label="Modo Remover (Clique Direito)"
+          label="Modo Remover"
           pressed={isMode(mode, "delete")}
           onPressedChange={(v) => v && setMode(toMode("delete"))}
           variant="destructive"
+          shortcut="W"
         >
           <Eraser className="h-4 w-4" />
         </Tool>
 
         <Tool
-          label="Modo Pincel (Ctrl + Arrastar)"
+          label="Modo Pincel"
           pressed={effectiveBrush}
           onPressedChange={(v) => v && setMode(toMode("brush"))}
+          shortcut="E"
         >
           <Brush className="h-4 w-4" />
+        </Tool>
+      </div>
+
+      {/* Divisor */}
+      <div className="h-7 w-px bg-border/50" />
+
+      {/* Ferramentas de rotação */}
+      <div className="flex items-center gap-1.5">
+        <Tool
+          label="Rotação Horizontal"
+          onPressedChange={rotateBlockHorizontal}
+          variant="rotation"
+          shortcut="R"
+        >
+          <RotateCw className="h-4 w-4" />
+        </Tool>
+
+        <Tool
+          label="Rotação Vertical"
+          onPressedChange={rotateBlockVertical}
+          variant="rotation"
+          shortcut="T"
+        >
+          <RotateCcw className="h-4 w-4" />
         </Tool>
       </div>
 
@@ -130,16 +221,18 @@ export const ToolsRail: React.FC = () => {
       {/* Ações de histórico */}
       <div className="flex items-center gap-1.5">
         <Tool 
-          label="Desfazer (Ctrl+Z)" 
+          label="Desfazer" 
           onPressedChange={() => canUndo && undo()}
           disabled={!canUndo}
+          shortcut="Ctrl+Z"
         >
           <Undo2 className="h-4 w-4" />
         </Tool>
         <Tool 
-          label="Refazer (Ctrl+Y)" 
+          label="Refazer" 
           onPressedChange={() => canRedo && redo()}
           disabled={!canRedo}
+          shortcut="Ctrl+Y"
         >
           <Redo2 className="h-4 w-4" />
         </Tool>
@@ -151,14 +244,19 @@ export const ToolsRail: React.FC = () => {
       {/* Configurações */}
       <div className="flex items-center gap-1.5">
         <Tool
-          label={showWire ? "Ocultar Wireframe" : "Mostrar Wireframe"}
+          label="Wireframe"
           pressed={showWire}
           onPressedChange={() => setShowWire(!showWire)}
+          shortcut="G"
         >
           <Grid3X3 className="h-4 w-4" />
         </Tool>
 
-        <Tool label={envLabel} onPressedChange={cycleEnv}>
+        <Tool 
+          label={envLabel} 
+          onPressedChange={cycleEnv}
+          shortcut="F"
+        >
           <EnvIcon className="h-4 w-4" />
         </Tool>
       </div>

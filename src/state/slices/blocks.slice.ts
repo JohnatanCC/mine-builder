@@ -26,16 +26,18 @@ export const createBlocksSlice: StateCreator<
       const k = keyFromPos(pos);
       if (state.blocks.has(k)) return {};
       const blocks = setRaw(state, k, type);
+      const variant = state.currentVariant || "block";
+      const rotation = state.currentRotation || { x: 0, y: 0, z: 0 };
 
       if (state.currentStroke) {
         return {
           blocks,
-          currentStroke: state.currentStroke.concat({ kind: "place", key: k, type }),
+          currentStroke: state.currentStroke.concat({ kind: "place", key: k, type, variant, rotation }),
         };
       }
       return {
         blocks,
-        past: pushPastLimited(state.past, { kind: "place", key: k, type }),
+        past: pushPastLimited(state.past, { kind: "place", key: k, type, variant, rotation }),
         future: [],
       };
     }),

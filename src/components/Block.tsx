@@ -27,6 +27,7 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const current = useWorld((s) => s.current);
   const setCurrent = useWorld((s) => s.setCurrent);
+  const currentVariant = useWorld((s) => s.currentVariant);
 
   const mode = useWorld((s) => s.mode);
   const isCtrlDown = useWorld((s) => s.isCtrlDown);
@@ -40,6 +41,10 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
   // animações
   const blockAnimEnabled = useWorld((s) => s.blockAnimEnabled);
   const addRemoveEffect = useWorld((s) => s.addRemoveEffect);
+
+  // Get block data from store to access variant
+  const blockData = useWorld((s) => s.blocks.get(key(...pos)));
+  const variant = blockData?.variant || "block";
 
   const idKey = React.useMemo(() => key(...pos), [pos]);
 
@@ -320,14 +325,72 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1, 1, 1]} />
-        {Array.isArray(materialToUse)
-          ? materialToUse.map((m, i) => (
-            <primitive key={i} object={m} attach={`material-${i}`} />
-          ))
-          : <primitive object={materialToUse as THREE.Material} attach="material" />}
-      </mesh>
+      <BlockGeometry 
+        variant={variant} 
+        materialToUse={materialToUse}
+        rotation={blockData?.rotation}
+      />
     </group>
   );
 }
+
+// Componente separado para gerenciar as geometrias
+const BlockGeometry: React.FC<{
+  variant: string;
+  materialToUse: THREE.Material | THREE.Material[];
+  rotation?: { x: number; y: number; z: number };
+}> = ({ variant, materialToUse, rotation = { x: 0, y: 0, z: 0 } }) => {
+  const renderMaterials = () => {
+    if (Array.isArray(materialToUse)) {
+      return materialToUse.map((m, i) => (
+        <primitive key={i} object={m} attach={`material-${i}`} />
+      ));
+    }
+    return <primitive object={materialToUse as THREE.Material} attach="material" />;
+  };
+
+  // Converter rotações de graus para radianos
+  const rotationRadians = [
+    (rotation.x * Math.PI) / 180,
+    (rotation.y * Math.PI) / 180,
+    (rotation.z * Math.PI) / 180,
+  ] as [number, number, number];
+
+  switch (variant) {
+    case "stairs":
+      return (
+        <group rotation={rotationRadians}>
+          {/* Parte inferior da escada (laje) */}
+          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+            <boxGeometry args={[1, 0.5, 1]} />
+            {renderMaterials()}
+          </mesh>
+          {/* Parte superior da escada (degrau) */}
+          <mesh castShadow receiveShadow position={[0, 0.25, -0.25]}>
+            <boxGeometry args={[1, 0.5, 0.5]} />
+            {renderMaterials()}
+          </mesh>
+        </group>
+      );
+
+    case "slab":
+      return (
+        <group rotation={rotationRadians}>
+          <mesh castShadow receiveShadow position={[0, -0.25, 0]}>
+            <boxGeometry args={[1, 0.5, 1]} />
+            {renderMaterials()}
+          </mesh>
+        </group>
+      );
+
+    default: // block
+      return (
+        <group rotation={rotationRadians}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[1, 1, 1]} />
+            {renderMaterials()}
+          </mesh>
+        </group>
+      );
+  }
+};
