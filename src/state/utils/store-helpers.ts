@@ -1,4 +1,4 @@
-import type { BlockData, BlockType, BlockVariant, BlockRotation } from "../../core/types";
+import type { BlockData, BlockType, BlockVariant, BlockRotation, StairShape } from "../../core/types";
 import type { HistoryItem } from "./types";
 
 export const HISTORY_LIMIT = 500;
@@ -10,12 +10,15 @@ export const setRaw = (
     currentRotation?: BlockRotation;
   },
   k: string,
-  type: BlockType
+  type: BlockType,
+  variant?: BlockVariant,
+  rotation?: BlockRotation,
+  shape?: StairShape
 ) => {
   const next = new Map(state.blocks);
-  const variant = state.currentVariant || "block";
-  const rotation = state.currentRotation || { x: 0, y: 0, z: 0 };
-  next.set(k, { type, variant, rotation });
+  const finalVariant = variant || state.currentVariant || "block";
+  const finalRotation = rotation || state.currentRotation || { x: 0, y: 0, z: 0 };
+  next.set(k, { type, variant: finalVariant, rotation: finalRotation, shape });
   return next;
 };
 

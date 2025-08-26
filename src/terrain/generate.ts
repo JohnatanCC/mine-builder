@@ -93,13 +93,27 @@ export function generateIslandSnapshot(opts: {
         let type: Voxel["type"] = "dirt";
         if (y === seaLevel + maxH) type = "grass";
         if (maxH >= 5 && y <= seaLevel + 1) type = "stone";
-        voxels.push({ x, y, z, type });
+        voxels.push({ 
+          x, 
+          y, 
+          z, 
+          type,
+          variant: "block",
+          rotation: { x: 0, y: 0, z: 0 }
+        });
       }
 
       // água raso em volta
       if (maxH <= 0 && fall > 0.1) {
         // Nota: "water" não está definido em BlockType, usando "glass" como placeholder
-        voxels.push({ x, y: seaLevel, z, type: "glass" });
+        voxels.push({ 
+          x, 
+          y: seaLevel, 
+          z, 
+          type: "glass",
+          variant: "block",
+          rotation: { x: 0, y: 0, z: 0 }
+        });
       }
     }
   }
@@ -121,7 +135,9 @@ export function mergeConstruction(
       x: b.x + offset.x, 
       y: b.y + offset.y, 
       z: b.z + offset.z, 
-      type: b.type as BlockType 
+      type: b.type as BlockType,
+      variant: "block",
+      rotation: { x: 0, y: 0, z: 0 }
     });
   }
   return { blocks: out };

@@ -1,0 +1,59 @@
+{
+  "version": "0.4.1",
+  "timestamp": 1735225419066,
+  "world": {
+    "blocks": [
+      {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "type": "oak_planks",
+        "variant": "stairs",
+        "rotation": { "x": 0, "y": 0, "z": 0 },
+        "shape": "straight"
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "type": "oak_planks",
+        "variant": "stairs",
+        "rotation": { "x": 0, "y": 90, "z": 0 },
+        "shape": "straight"
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "z": 1,
+        "type": "oak_planks",
+        "variant": "stairs",
+        "rotation": { "x": 0, "y": 180, "z": 0 },
+        "shape": "inner_left"
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "z": 5,
+        "type": "oak_planks",
+        "variant": "fence",
+        "rotation": { "x": 0, "y": 0, "z": 0 }
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "z": 5,
+        "type": "oak_planks",
+        "variant": "fence",
+        "rotation": { "x": 0, "y": 90, "z": 0 }
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "z": 5,
+        "type": "oak_planks",
+        "variant": "fence",
+        "rotation": { "x": 0, "y": 90, "z": 0 }
+      }
+    ]
+  }
+}

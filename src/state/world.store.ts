@@ -15,7 +15,14 @@ import type { HistoryItem, HistoryOp } from "./utils/types";
 import { key as makeKey, parseKey } from "../core/keys";
 
 // ===== Snapshot types =====
-export type Voxel = { x: number; y: number; z: number; type: BlockType };
+export type Voxel = { 
+  x: number; 
+  y: number; 
+  z: number; 
+  type: BlockType;
+  variant?: BlockVariant;
+  rotation?: BlockRotation;
+};
 export type WorldSnapshot = {
   seed?: number;
   blocks: Voxel[];
@@ -155,7 +162,15 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     const blocks = get().blocks ?? safeBlocks;
     for (const [k, data] of blocks.entries()) {
       const [x, y, z] = parseKey(k);
-      voxels.push({ x, y, z, type: (data as BlockData).type });
+      const blockData = data as BlockData;
+      voxels.push({ 
+        x, 
+        y, 
+        z, 
+        type: blockData.type,
+        variant: blockData.variant,
+        rotation: blockData.rotation
+      });
     }
     return { blocks: voxels };
   };
@@ -164,7 +179,11 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     if (!snap || !Array.isArray(snap.blocks)) return;
     const next = new Map<string, BlockData>();
     for (const v of snap.blocks) {
-      next.set(makeKey(v.x, v.y, v.z), { type: v.type } as BlockData);
+      next.set(makeKey(v.x, v.y, v.z), { 
+        type: v.type,
+        variant: v.variant || "block",
+        rotation: v.rotation || { x: 0, y: 0, z: 0 }
+      } as BlockData);
     }
     set({
       blocks: next,
@@ -268,12 +287,14 @@ export const useWorld = create<WorldState>()((set, get, api) => {
   };
 });
 
-// === Import helpers (inalterado) ===
+// === Import helpers ===
 type ExternalBlock = {
   x: number;
   y: number;
   z: number;
   type: BlockType | string;
+  variant?: BlockVariant | string;
+  rotation?: BlockRotation;
 };
 function hasWorld(
   obj: unknown
@@ -296,6 +317,9 @@ function externalToSnapshot(payload: unknown): WorldSnapshot {
     y: Number(b.y) | 0,
     z: Number(b.z) | 0,
     type: b.type as BlockType,
+    // Backward compatibility: suporte a arquivos antigos sem variant/rotation
+    variant: (b.variant as BlockVariant) || "block",
+    rotation: b.rotation || { x: 0, y: 0, z: 0 }
   }));
   return { blocks: voxels };
 }

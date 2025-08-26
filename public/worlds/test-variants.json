@@ -1,0 +1,48 @@
+{
+  "version": "0.4.1",
+  "timestamp": 1735225419066,
+  "world": {
+    "blocks": [
+      {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "type": "grass",
+        "variant": "block",
+        "rotation": { "x": 0, "y": 0, "z": 0 }
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "z": 0,
+        "type": "oak_planks",
+        "variant": "stairs",
+        "rotation": { "x": 0, "y": 90, "z": 0 }
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "z": 0,
+        "type": "stone",
+        "variant": "slab",
+        "rotation": { "x": 0, "y": 0, "z": 0 }
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "z": 0,
+        "type": "oak_planks",
+        "variant": "fence",
+        "rotation": { "x": 0, "y": 0, "z": 0 }
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "z": 0,
+        "type": "glass",
+        "variant": "panel",
+        "rotation": { "x": 90, "y": 0, "z": 0 }
+      }
+    ]
+  }
+}
