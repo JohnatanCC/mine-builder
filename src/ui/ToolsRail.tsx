@@ -79,6 +79,7 @@ export const ToolsRail: React.FC = () => {
 
   const rotateBlockHorizontal = useWorld(s => s.rotateBlockHorizontal);
   const rotateBlockVertical = useWorld(s => s.rotateBlockVertical);
+  const currentRotation = useWorld(s => s.currentRotation);
 
   const effectiveBrush = isCtrlDown || isMode(mode, "brush");
 
@@ -213,6 +214,16 @@ export const ToolsRail: React.FC = () => {
         >
           <RotateCcw className="h-4 w-4" />
         </Tool>
+
+        {/* Indicador de rotação atual */}
+        <div className="flex flex-col items-center text-xs text-muted-foreground ml-2">
+          <div className="font-mono text-[10px] leading-tight">
+            X:{currentRotation?.x || 0}°
+          </div>
+          <div className="font-mono text-[10px] leading-tight">
+            Y:{currentRotation?.y || 0}°
+          </div>
+        </div>
       </div>
 
       {/* Divisor */}

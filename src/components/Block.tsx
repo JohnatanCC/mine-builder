@@ -69,7 +69,31 @@ export function Block({ pos, type }: { pos: Pos; type: BlockType }) {
 
   const computeAdjacentPos = (e: ThreeEvent<PointerEvent>): Pos => {
     const n = faceFromEvent(e);
-    return n ? computeAdjacentByNormal(n) : computeAdjacentFallback(e);
+    const hitPoint = e.point as THREE.Vector3;
+    
+    if (n) {
+      // Tratamento especial para slabs - sempre permitir colocação em cima
+      if (variant === "slab" && n.y > 0) {
+        const localY = hitPoint.y - pos[1];
+        // Se clicou na parte superior da laje (acima do centro), colocar em cima
+        if (localY > 0) {
+          return [pos[0], pos[1] + 1, pos[2]];
+        }
+      }
+      
+      // Tratamento especial para escadas
+      if (variant === "stairs" && n.y > 0) {
+        const localHit = hitPoint.clone().sub(new THREE.Vector3(pos[0], pos[1], pos[2]));
+        // Se clicou na parte superior da escada, colocar em cima
+        if (localHit.y > 0.25) {
+          return [pos[0], pos[1] + 1, pos[2]];
+        }
+      }
+      
+      return computeAdjacentByNormal(n);
+    }
+    
+    return computeAdjacentFallback(e);
   };
 
   // ===== Brush state =====

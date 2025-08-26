@@ -64,6 +64,8 @@ export const createBlocksSlice: StateCreator<
 
   hasBlock: (pos) => get().blocks.has(keyFromPos(pos)),
 
+  getBlock: (pos: Pos3) => get().blocks.get(keyFromPos(pos)) || null,
+
   setBlockSilent: (pos, type) =>
     set((state) => {
       const k = keyFromPos(pos);

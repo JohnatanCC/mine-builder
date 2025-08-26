@@ -28,6 +28,7 @@ export type WorldState = {
   setBlock: (pos: Pos, type: BlockType) => void;
   removeBlock: (pos: Pos) => void;
   hasBlock: (pos: Pos) => boolean;
+  getBlock: (pos: Pos) => BlockData | null;
   setBlockSilent: (pos: Pos, type: BlockType) => void;
   removeBlockSilent: (pos: Pos) => void;
 
@@ -183,6 +184,7 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     setBlock: S.setBlock!,
     removeBlock: S.removeBlock!,
     hasBlock: S.hasBlock!,
+    getBlock: S.getBlock!,
     setBlockSilent: S.setBlockSilent!,
     removeBlockSilent: S.removeBlockSilent!,
 

@@ -3,7 +3,7 @@ import { useWorld } from "@/state/world.store";
 import { BlockIcon } from "@/ui/BlockIcon";
 import { getLabel, REGISTRY } from "@/core/blocks/registry";
 import { Button } from "@/components/ui/button";
-import { Box, Layers3, Square } from "lucide-react";
+import { Package, MoveUp, Minimize2 } from "lucide-react";
 import type { BlockVariant } from "@/core/types";
 import {
   Tooltip,
@@ -14,17 +14,17 @@ import {
 
 const VARIANT_CONFIG = {
   block: {
-    icon: Box,
+    icon: Package,
     label: "Bloco",
     description: "Bloco completo"
   },
   stairs: {
-    icon: Layers3,
+    icon: MoveUp,
     label: "Escada",
     description: "Bloco em formato de escada"
   },
   slab: {
-    icon: Square,
+    icon: Minimize2,
     label: "Laje",
     description: "Bloco em formato de laje"
   }
