@@ -15,11 +15,12 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
   materials 
 }) => {
   const groupRef = React.useRef<THREE.Group>(null);
+  const visualGroupRef = React.useRef<THREE.Group>(null);
 
-  // Aplicar rotações
+  // Aplicar rotações apenas no grupo visual (não na hitbox)
   React.useEffect(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.set(
+    if (visualGroupRef.current) {
+      visualGroupRef.current.rotation.set(
         (rotation.x * Math.PI) / 180,
         (rotation.y * Math.PI) / 180,
         (rotation.z * Math.PI) / 180
@@ -111,13 +112,16 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
 
   return (
     <group ref={groupRef}>
-      {/* Hitbox invisível para colisão - sempre 1x1x1 independente da variante */}
+      {/* Hitbox invisível para colisão - NUNCA rotaciona */}
       <mesh visible={false}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
-      {/* Geometria visual da variante */}
-      {renderVariant()}
+      
+      {/* Grupo visual que aplica rotação */}
+      <group ref={visualGroupRef}>
+        {renderVariant()}
+      </group>
     </group>
   );
 };

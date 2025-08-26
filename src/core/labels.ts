@@ -20,7 +20,7 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   spruce_leaves: "Folhas Pinheiro",
   birch_leaves: "Folhas Bétula",
   brick: "Tijolos",
-  redstone_lamp_on: "Lâmpada de Redstone (Liga)",
+  redstone_lamp_on: "Lâmpada de Redstone",
   white_concrete: "Concreto Branco",
   gray_concrete: "Concreto Cinza",
   black_concrete: "Concreto Preto",

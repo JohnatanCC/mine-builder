@@ -60,6 +60,8 @@ export interface Voxel {
   y: number;
   z: number;
   type: BlockType;
+  variant?: BlockVariant;
+  rotation?: BlockRotation;
 }
 
 export interface WorldSnapshot {

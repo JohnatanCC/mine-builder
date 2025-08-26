@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import type { WorldSnapshot } from "@/core/types";
 
 // Versão atual da aplicação - atualizar a cada release
-const CURRENT_VERSION = "0.4.0";
+const CURRENT_VERSION = "0.4.1";
 
 type ImportResult =
   | { ok: true; version: string }
