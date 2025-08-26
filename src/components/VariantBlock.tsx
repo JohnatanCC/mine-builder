@@ -111,6 +111,12 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
 
   return (
     <group ref={groupRef}>
+      {/* Hitbox invisível para colisão - sempre 1x1x1 independente da variante */}
+      <mesh visible={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      {/* Geometria visual da variante */}
       {renderVariant()}
     </group>
   );
