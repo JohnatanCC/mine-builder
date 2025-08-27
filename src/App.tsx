@@ -7,6 +7,7 @@ import { Ground } from "./components/Ground";
 import { Highlight } from "./components/Highlight";
 import { Lights } from "./components/Lights";
 import { LinePreview } from "./components/LinePreview";
+import { CopyPreview } from "./components/CopyPreview";
 import FpsMeter from "./ui/FpsMeter";
 import { AppShell } from "./components/AppShell";
 import { TopBar } from "./ui/TopBar";
@@ -15,7 +16,7 @@ import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
 import { ToolsRail } from "./ui/ToolsRail";
 import { SelectedBlock } from "./ui/SelectedBlock";
-import { LineToolHint } from "./ui/LineToolHint";
+import { ToolHint } from "./components/ToolHint";
 import { AmbientAudio } from "./components/AmbientAudio";
 import { Keybinds } from "./components/Keybinds";
 import { CameraControls } from "./components/CameraControls";
@@ -69,6 +70,7 @@ export default function App() {
           <CameraControls />
           <Highlight />
           <LinePreview />
+          <CopyPreview />
           <Lights />
           <World />
           <Ground />
@@ -80,7 +82,7 @@ export default function App() {
       </div>
       <FpsMeter />
       <CommandMenu /> {/* Ctrl+K */}
-      <LineToolHint />
+      <ToolHint />
       <AmbientAudio />
       <Keybinds />
       <LoadingOverlay />

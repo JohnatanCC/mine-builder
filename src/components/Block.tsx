@@ -12,7 +12,8 @@ import { decideAction } from '@/systems/input/placement';
 import { ANIM } from '@/core/constants';
 import { easeOutCubic, normTime } from '@/core/anim';
 import { VariantBlock } from './VariantBlock';
-import { calculateLineBetweenPoints } from '@/systems/tools/geometry';
+import { calculateLineBetweenPoints, findAlignedBlocks, calculateCopyPositionsFromFace } from '@/systems/tools/geometry';
+import { handleToolClick } from '@/systems/tools/handlers';
 
 const BRUSH_INTERVAL_MS = 22; // ~45 Hz
 
@@ -49,6 +50,10 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
   const currentTool = useWorld((s) => s.currentTool);
   const lineStart = useWorld((s) => s.lineStart);
   const setLineStart = useWorld((s) => s.setLineStart);
+  const currentVariant = useWorld((s) => s.currentVariant);
+  const currentRotation = useWorld((s) => s.currentRotation);
+  const setCopyPreview = useWorld((s) => s.setCopyPreview);
+  const blocks = useWorld((s) => s.blocks);
 
   // animações
   const blockAnimEnabled = useWorld((s) => s.blockAnimEnabled);
@@ -60,7 +65,14 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
   const faceFromEvent = (e: ThreeEvent<PointerEvent>): THREE.Vector3 | null => {
     const n = e.face?.normal as THREE.Vector3 | undefined;
     if (!n) return null;
-    return new THREE.Vector3(Math.sign(Math.round(n.x)), Math.sign(Math.round(n.y)), Math.sign(Math.round(n.z)));
+    
+    // Normaliza e arredonda os valores para garantir precisão
+    const normalized = new THREE.Vector3(n.x, n.y, n.z).normalize();
+    return new THREE.Vector3(
+      Math.sign(Math.round(normalized.x * 10) / 10), 
+      Math.sign(Math.round(normalized.y * 10) / 10), 
+      Math.sign(Math.round(normalized.z * 10) / 10)
+    );
   };
 
   const computeAdjacentByNormal = (n: THREE.Vector3): Pos => [pos[0] + n.x, pos[1] + n.y, pos[2] + n.z];
@@ -167,6 +179,45 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
     const adj = computeAdjacentPos(e);
     setHoveredAdj(adj);
 
+    // Copy tool preview generation - throttled for performance
+    if (currentTool === "copy") {
+      const now = performance.now();
+      if (now - lastBrushAt.current < 50) return; // Throttle to 20 FPS for better responsiveness
+      lastBrushAt.current = now;
+      
+      const native = e.nativeEvent as PointerEvent;
+      const ctrl = native.ctrlKey || isCtrlDown;
+      const shift = native.shiftKey;
+      
+      const faceNormal = faceFromEvent(e);
+      if (faceNormal) {
+        const normalAsPos: Pos = [Math.round(faceNormal.x), Math.round(faceNormal.y), Math.round(faceNormal.z)];
+        
+        // Determina o modo de cópia baseado nas teclas modificadoras
+        let copyMode: 'full' | 'vertical' | 'horizontal' = 'full';
+        
+        if (ctrl && !shift) {
+          copyMode = 'vertical';
+        } else if (shift && !ctrl) {
+          copyMode = 'horizontal';
+        }
+        
+        // Find aligned blocks (detects separated but aligned structures)
+        const connectedBlocks = findAlignedBlocks(pos, blocks, copyMode);
+        if (connectedBlocks.length > 0 && connectedBlocks.length <= 100) { // Increased limit for better preview
+          
+          // Calculate copy positions for preview with correct mode
+          const previewPositions = calculateCopyPositionsFromFace(connectedBlocks, normalAsPos, copyMode);
+          setCopyPreview(previewPositions);
+        } else {
+          setCopyPreview(null);
+        }
+      } else {
+        setCopyPreview(null);
+      }
+      return; // Don't continue with brush logic
+    }
+
     const native = e.nativeEvent as PointerEvent;
     const ctrl = native.ctrlKey || isCtrlDown;
     const btns = native.buttons;
@@ -203,21 +254,23 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
 
     if (!isClick(e) || !canFire()) { resetStroke(); return; }
 
-    // Line Tool Logic
+    // Tool handling
     if (currentTool === "line") {
-      const adj = computeAdjacentPos(e); // Use adjacent position, not block position
+      // Determine if we're in paint mode for positioning
+      const isPaintMode = false; // For now, line tool always uses adjacent positioning
+      const targetPos = isPaintMode ? pos : computeAdjacentPos(e);
       
       if (!lineStart) {
         // First click - set start point
-        setLineStart(adj);
-        console.log("Line Tool: Start point set at", adj);
+        setLineStart(targetPos);
+        console.log("Line Tool: Start point set at", targetPos);
         resetStroke();
         return;
       } else {
         // Second click - draw line and reset
-        console.log("Line Tool: Drawing line from", lineStart, "to", adj);
+        console.log("Line Tool: Drawing line from", lineStart, "to", targetPos);
         
-        const linePoints = calculateLineBetweenPoints(lineStart, adj);
+        const linePoints = calculateLineBetweenPoints(lineStart, targetPos);
         console.log("Line Tool: Calculated points:", linePoints);
         
         // Apply line based on mode
@@ -245,6 +298,49 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
       }
     }
 
+    // Copy tool
+    if (currentTool === "copy") {
+      const button = getButton();
+      const buttonForTool = (button === 2 ? 2 : 0) as 0 | 2;
+      const faceNormal = faceFromEvent(e);
+      
+      // Convert THREE.Vector3 to Pos format for the handler
+      const normalAsPos: Pos = faceNormal ? 
+        [Math.round(faceNormal.x), Math.round(faceNormal.y), Math.round(faceNormal.z)] : 
+        [0, 1, 0]; // Default to Y+ if no face normal
+      
+      handleToolClick(
+        currentTool,
+        pos, // Use block position for copy source detection
+        buttonForTool,
+        current,
+        currentVariant,
+        currentRotation,
+        normalAsPos, // Pass face normal
+        ctrl, // Pass ctrl state
+        native.shiftKey // Pass shift state
+      );
+      resetStroke();
+      return;
+    }
+
+    // Paint tool - uses block position, not adjacent
+    if (currentTool === "paint") {
+      const button = getButton();
+      const buttonForTool = (button === 2 ? 2 : 0) as 0 | 2;
+      
+      handleToolClick(
+        currentTool,
+        pos, // Use block position for painting
+        buttonForTool,
+        current,
+        currentVariant,
+        currentRotation
+      );
+      resetStroke();
+      return;
+    }
+
     const button = getButton(); // 0 | 2
     const action = decideAction({ button: (button === 2 ? 2 : 0) as 0 | 2, mode, ctrlDown: ctrl });
 
@@ -265,6 +361,12 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
   const handlePointerOut = () => {
     setHoveredKey(null);
     setHoveredAdj(null);
+    
+    // Clear copy preview when leaving block
+    if (currentTool === "copy") {
+      setCopyPreview(null);
+    }
+    
     endStroke();
     resetStroke();
   };

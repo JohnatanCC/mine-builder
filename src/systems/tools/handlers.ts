@@ -1,6 +1,6 @@
 import type { Tool, Pos, BlockType, BlockVariant, BlockRotation } from "@/core/types";
 import { useWorld } from "@/state/world.store";
-import { executeLineTool, executeFillTool, executeMirrorTool } from "./actions";
+import { executeLineTool, executeCopyTool, executeDeleteConnectedTool } from "./actions";
 import { toast } from "sonner";
 
 /**
@@ -12,7 +12,10 @@ export function handleToolClick(
   button: 0 | 1 | 2, // 0=esquerdo, 2=direito
   blockType: BlockType,
   variant: BlockVariant,
-  rotation: BlockRotation
+  rotation: BlockRotation,
+  faceNormal?: Pos, // Normal da face clicada
+  ctrlDown?: boolean,
+  shiftDown?: boolean
 ) {
   switch (tool) {
     case "brush":
@@ -24,12 +27,12 @@ export function handleToolClick(
       handleLineTool(clickedPos, button, blockType, variant, rotation);
       break;
 
-    case "fill":
-      handleFillTool(clickedPos, button, blockType, variant, rotation);
+    case "copy":
+      handleCopyTool(clickedPos, button, blockType, variant, rotation, faceNormal, ctrlDown, shiftDown);
       break;
 
-    case "mirror":
-      handleMirrorTool(clickedPos, button, blockType, variant, rotation);
+    case "paint":
+      handlePaintTool(clickedPos, button, blockType, variant, rotation);
       break;
 
     default:
@@ -98,33 +101,65 @@ function handleLineTool(
 }
 
 /**
- * Ferramenta Fill - Preenche áreas conectadas
+ * Ferramenta Copy - Copia estruturas conectadas de forma inteligente com um clique
  */
-function handleFillTool(
+function handleCopyTool(
   pos: Pos,
   button: 0 | 1 | 2,
   blockType: BlockType,
   variant: BlockVariant,
-  rotation: BlockRotation
+  rotation: BlockRotation,
+  faceNormal?: Pos,
+  ctrlDown?: boolean,
+  shiftDown?: boolean
 ) {
+  const store = useWorld.getState();
+  
   if (button === 2) {
-    // Botão direito - não faz nada no fill
+    // Botão direito - deleta estrutura conectada
+    const blocksDeleted = executeDeleteConnectedTool(pos, blockType, variant, rotation);
+    
+    if (blocksDeleted > 0) {
+      toast(`Estrutura removida: ${blocksDeleted} blocos`);
+    } else {
+      toast("Nenhuma estrutura encontrada para remover");
+    }
+    
+    // Limpa preview
+    store.setCopyPreview(null);
     return;
   }
 
-  const blocksPlaced = executeFillTool(pos, blockType, variant, rotation);
+  // Se não temos a normal da face, usa padrão (direção Y+)
+  const normal: Pos = faceNormal || [0, 1, 0];
+  
+  // Determina o modo de cópia baseado nas teclas modificadoras
+  let copyMode: 'full' | 'vertical' | 'horizontal' = 'full';
+  
+  if (ctrlDown && !shiftDown) {
+    copyMode = 'vertical';
+  } else if (shiftDown && !ctrlDown) {
+    copyMode = 'horizontal';
+  }
+  // Se ambas ou nenhuma estão pressionadas, usa modo completo
+  
+  // Executa cópia com um clique
+  const blocksPlaced = executeCopyTool(pos, normal, blockType, variant, rotation, copyMode);
+  
+  const modeText = copyMode === 'vertical' ? ' (vertical)' : 
+                   copyMode === 'horizontal' ? ' (horizontal)' : '';
   
   if (blocksPlaced > 0) {
-    toast(`Área preenchida: ${blocksPlaced} blocos`);
+    toast(`Estrutura copiada: ${blocksPlaced} blocos${modeText}`);
   } else {
-    toast("Nenhum bloco foi alterado");
+    toast("Nenhuma posição válida para copiar ou estrutura não encontrada");
   }
 }
 
 /**
- * Ferramenta Mirror - Espelha construções
+ * Ferramenta Paint - Troca o tipo de blocos existentes
  */
-function handleMirrorTool(
+function handlePaintTool(
   pos: Pos,
   button: 0 | 1 | 2,
   blockType: BlockType,
@@ -134,29 +169,18 @@ function handleMirrorTool(
   const store = useWorld.getState();
   
   if (button === 2) {
-    // Botão direito - alterna eixo de espelhamento
-    const newAxis = store.mirrorAxis === "x" ? "z" : "x";
-    store.setMirrorAxis(newAxis);
-    toast(`Eixo de espelhamento: ${newAxis.toUpperCase()}`);
+    // Botão direito - não faz nada no paint
     return;
   }
 
-  // Botão esquerdo - executa espelhamento
-  // Para simplicidade inicial, espelha um bloco único
-  const centerLine = store.mirrorAxis === "x" ? pos[0] : pos[2];
-  const sourcePoints = [pos];
-  
-  const blocksPlaced = executeMirrorTool(
-    sourcePoints,
-    store.mirrorAxis,
-    centerLine,
-    blockType,
-    variant,
-    rotation
-  );
-  
-  if (blocksPlaced > 0) {
-    toast(`Espelhamento realizado: ${blocksPlaced} blocos (eixo ${store.mirrorAxis.toUpperCase()})`);
+  // Verifica se existe um bloco na posição (usa a posição exata do bloco clicado)
+  if (store.hasBlock(pos)) {
+    // Remove o bloco antigo e coloca o novo
+    store.removeBlock(pos);
+    store.setBlock(pos, blockType);
+    toast("Bloco substituído");
+  } else {
+    toast("Nenhum bloco para substituir nesta posição");
   }
 }
 
@@ -177,11 +201,11 @@ export function getToolStatus(tool: Tool): string {
       }
       return "Linha: Clique no primeiro ponto";
       
-    case "fill":
-      return "Preenchimento: Clique para preencher área conectada";
+    case "copy":
+      return "Cópia inteligente: Ctrl (coluna) | Shift (camada) | Detecta estruturas alinhadas";
       
-    case "mirror":
-      return `Espelhar: Eixo ${store.mirrorAxis.toUpperCase()} (botão direito alterna)`;
+    case "paint":
+      return "Pintura: Clique em um bloco para substituí-lo pelo bloco selecionado";
       
     default:
       return "Ferramenta desconhecida";

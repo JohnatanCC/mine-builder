@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw, Minus } from "lucide-react";
+import { Square, Eraser, Brush, Undo2, Redo2, Grid3X3, Sun, Sunset, Moon, RotateCw, RotateCcw, Minus, Copy, Palette } from "lucide-react";
 import { useWorld } from "@/state/world.store";
 import type { Mode, Tool } from "@/core/types";
 
@@ -64,7 +64,6 @@ const Tool: React.FC<React.PropsWithChildren<{
 export const ToolsRail: React.FC = () => {
   const mode = useWorld(s => s.mode);
   const setMode = useWorld(s => s.setMode);
-  const isCtrlDown = useWorld(s => s.isCtrlDown);
 
   const undo = useWorld(s => s.undo);
   const redo = useWorld(s => s.redo);
@@ -87,7 +86,7 @@ export const ToolsRail: React.FC = () => {
   const lineStart = useWorld(s => s.lineStart);
   const setLineStart = useWorld(s => s.setLineStart);
 
-  const effectiveBrush = isCtrlDown || isMode(mode, "brush");
+  const effectiveBrush = isMode(mode, "brush");
 
   const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
   const envLabel = env === "day" ? "Céu: Dia" : env === "dusk" ? "Céu: Tarde" : "Céu: Noite";
@@ -119,6 +118,14 @@ export const ToolsRail: React.FC = () => {
         case 'l':
           e.preventDefault();
           setCurrentTool("line");
+          break;
+        case 'c':
+          e.preventDefault();
+          setCurrentTool("copy");
+          break;
+        case 'p':
+          e.preventDefault();
+          setCurrentTool("paint");
           break;
         case 'escape':
           e.preventDefault();
@@ -228,6 +235,36 @@ export const ToolsRail: React.FC = () => {
           {lineStart && (
             <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-orange-500 border-2 border-background animate-pulse" />
           )}
+        </Tool>
+
+        <Tool
+          label="Ferramenta Cópia"
+          pressed={currentTool === "copy"}
+          onPressedChange={(v) => {
+            if (v) {
+              setCurrentTool("copy");
+            } else {
+              setCurrentTool("brush");
+            }
+          }}
+          shortcut="C"
+        >
+          <Copy className="h-4 w-4" />
+        </Tool>
+
+        <Tool
+          label="Ferramenta Pintura"
+          pressed={currentTool === "paint"}
+          onPressedChange={(v) => {
+            if (v) {
+              setCurrentTool("paint");
+            } else {
+              setCurrentTool("brush");
+            }
+          }}
+          shortcut="P"
+        >
+          <Palette className="h-4 w-4" />
         </Tool>
       </div>
 

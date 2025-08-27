@@ -1,7 +1,9 @@
 import type { Pos, BlockType, BlockVariant, BlockRotation } from "@/core/types";
-import { calculateLineBetweenPoints, calculateFloodFill, calculateMirrorPoints } from "./geometry";
+import { calculateLineBetweenPoints, findAlignedBlocks, calculateCopyPositionsFromFace } from "./geometry";
 import { useWorld } from "@/state/world.store";
-import { key as makeKey } from "@/core/keys";
+
+// Helper function for creating position keys
+const makeKey = (...pos: Pos) => `${pos[0]},${pos[1]},${pos[2]}`;
 
 /**
  * Executa a ferramenta Line Tool
@@ -25,82 +27,91 @@ export function executeLineTool(start: Pos, end: Pos, blockType: BlockType, vari
 }
 
 /**
- * Executa a ferramenta Fill/Bucket
+ * Executa a ferramenta Copy - copia estruturas conectadas baseado na face clicada
  */
-export function executeFillTool(startPos: Pos, blockType: BlockType, variant: BlockVariant, rotation: BlockRotation) {
+export function executeCopyTool(
+  clickPos: Pos, 
+  faceNormal: Pos, 
+  blockType: BlockType, 
+  variant: BlockVariant, 
+  rotation: BlockRotation,
+  copyMode: 'full' | 'vertical' | 'horizontal' = 'full'
+) {
   const store = useWorld.getState();
   const blocks = store.blocks;
   
-  // Determina o tipo do bloco que está sendo substituído
-  const startKey = makeKey(...startPos);
-  const targetBlock = blocks.get(startKey);
-  const targetType = targetBlock?.type || null;
+  // Encontra blocos alinhados do mesmo tipo (detecta estruturas separadas mas alinhadas)
+  const connectedBlocks = findAlignedBlocks(clickPos, blocks, copyMode);
   
-  // Se já é do mesmo tipo, não faz nada
-  if (targetType === blockType) {
+  if (connectedBlocks.length === 0) {
     return 0;
   }
   
-  // Calcula os pontos para preencher
-  const points = calculateFloodFill(startPos, targetType, blocks);
+  // Calcula novas posições baseadas na face normal e modo
+  const newPositions = calculateCopyPositionsFromFace(connectedBlocks, faceNormal, copyMode);
   
-  if (points.length === 0) {
+  // Filtra apenas posições vazias (não duplicar blocos existentes)
+  const emptyPositions: { pos: Pos; originalIndex: number }[] = [];
+  
+  newPositions.forEach((pos: Pos, index: number) => {
+    const key = makeKey(...pos);
+    const isEmpty = !blocks.has(key);
+    if (isEmpty) {
+      emptyPositions.push({ pos, originalIndex: index });
+    }
+  });
+
+  if (emptyPositions.length === 0) {
+    console.log("Todas as posições de destino já estão ocupadas");
     return 0;
   }
   
   // Inicia um stroke para histórico
   store.beginStroke();
   
-  // Substitui todos os blocos
-  points.forEach(pos => {
-    if (targetType === null) {
-      // Se não havia bloco, coloca um novo
-      store.setBlock(pos, blockType);
-    } else {
-      // Se havia bloco, remove o antigo e coloca o novo
-      store.removeBlock(pos);
-      store.setBlock(pos, blockType);
+  // Copia os blocos apenas para as posições vazias
+  emptyPositions.forEach(({ pos, originalIndex }) => {
+    const originalBlock = blocks.get(makeKey(...connectedBlocks[originalIndex]));
+    if (originalBlock) {
+      // Coloca o novo bloco mantendo o tipo original
+      store.setBlock(pos, originalBlock.type);
     }
   });
   
   // Finaliza o stroke
   store.endStroke();
   
-  return points.length;
+  return emptyPositions.length;
 }
 
 /**
- * Executa a ferramenta Mirror/Flip
+ * Executa a remoção de estruturas conectadas
  */
-export function executeMirrorTool(
-  sourcePoints: Pos[], 
-  axis: "x" | "z", 
-  centerLine: number,
-  blockType: BlockType, 
-  variant: BlockVariant, 
-  rotation: BlockRotation
-) {
+export function executeDeleteConnectedTool(clickPos: Pos, blockType: BlockType, variant: BlockVariant, rotation: BlockRotation) {
   const store = useWorld.getState();
+  const blocks = store.blocks;
   
-  // Calcula os pontos espelhados
-  const mirrorPoints = calculateMirrorPoints(sourcePoints, axis, centerLine);
+  // Encontra blocos alinhados do mesmo tipo (detecta estruturas separadas mas alinhadas)
+  const connectedBlocks = findAlignedBlocks(clickPos, blocks);
   
-  if (mirrorPoints.length === 0) {
+  if (connectedBlocks.length === 0) {
     return 0;
   }
   
   // Inicia um stroke para histórico
   store.beginStroke();
   
-  // Coloca blocos nos pontos espelhados
-  mirrorPoints.forEach(pos => {
-    store.setBlock(pos, blockType);
+  // Remove todos os blocos conectados
+  connectedBlocks.forEach((pos: Pos) => {
+    if (store.hasBlock(pos)) {
+      store.removeBlock(pos);
+    }
   });
   
   // Finaliza o stroke
   store.endStroke();
   
-  return mirrorPoints.length;
+  return connectedBlocks.length;
 }
 
 /**

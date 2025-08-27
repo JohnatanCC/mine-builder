@@ -58,8 +58,8 @@ export type WorldState = {
   setLineStart: (pos: Pos | null) => void;
   lineEnd: Pos | null;
   setLineEnd: (pos: Pos | null) => void;
-  mirrorAxis: "x" | "z";
-  setMirrorAxis: (axis: "x" | "z") => void;
+  copyPreview: Pos[] | null;
+  setCopyPreview: (positions: Pos[] | null) => void;
 
   // visual-wire.slice
   showWire: boolean;
@@ -235,8 +235,8 @@ export const useWorld = create<WorldState>()((set, get, api) => {
     setLineStart: S.setLineStart!,
     lineEnd: S.lineEnd!,
     setLineEnd: S.setLineEnd!,
-    mirrorAxis: S.mirrorAxis!,
-    setMirrorAxis: S.setMirrorAxis!,
+    copyPreview: S.copyPreview!,
+    setCopyPreview: S.setCopyPreview!,
 
     // wireframe
     showWire: S.showWire!,

@@ -13,7 +13,7 @@ export const createToolsSlice: StateCreator<WorldState, [], [], Partial<WorldSta
   lineEnd: null as Pos | null,
   setLineEnd: (pos: Pos | null) => set({ lineEnd: pos }),
 
-  // mirror tool state
-  mirrorAxis: "x" as "x" | "z",
-  setMirrorAxis: (axis: "x" | "z") => set({ mirrorAxis: axis }),
+  // copy tool state
+  copyPreview: null as Pos[] | null,
+  setCopyPreview: (positions: Pos[] | null) => set({ copyPreview: positions }),
 });

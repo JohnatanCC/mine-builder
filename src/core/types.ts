@@ -52,7 +52,7 @@ export type BlockRotation = {
 };
 
 export type Mode = "place" | "delete";
-export type Tool = "brush" | "line" | "fill" | "mirror";
+export type Tool = "brush" | "line" | "copy" | "paint";
 export type Pos = [number, number, number];
 export type BlockData = { 
   type: BlockType;
