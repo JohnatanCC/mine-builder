@@ -21,7 +21,7 @@ export const PIXEL_FILTERS = {
 export const UI_SHELL = {
   leftWidth: 340,   // toolbar de ícones  
   rightWidth: 300, // inspector
-  topHeight: 40,
+  topHeight: "auto",   // aumentado para acomodar a toolbar melhorada
   bottomHeight: 84,
 } as const;
 

@@ -36,7 +36,7 @@ const Tool: React.FC<React.PropsWithChildren<{
             onPressedChange={onPressedChange}
             disabled={disabled}
             className={[
-              "h-9 w-9 rounded-md border bg-background/90 backdrop-blur",
+              "h-10 w-10 rounded-lg border bg-background/90 backdrop-blur",
               "transition-all duration-200 ease-out shadow-sm relative",
               variantClasses[variant],
               disabled 
@@ -62,6 +62,9 @@ const Tool: React.FC<React.PropsWithChildren<{
 };
 
 export const ToolsRail: React.FC = () => {
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [lastActivity, setLastActivity] = React.useState(Date.now());
+  
   const mode = useWorld(s => s.mode);
   const setMode = useWorld(s => s.setMode);
 
@@ -90,6 +93,26 @@ export const ToolsRail: React.FC = () => {
 
   const EnvIcon = env === "day" ? Sun : env === "dusk" ? Sunset : Moon;
   const envLabel = env === "day" ? "Céu: Dia" : env === "dusk" ? "Céu: Tarde" : "Céu: Noite";
+
+  // Auto-fade quando não há atividade
+  const [autoFade, setAutoFade] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isHovered && Date.now() - lastActivity > 3000) {
+        setAutoFade(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [lastActivity, isHovered]);
+
+  const handleActivity = React.useCallback(() => {
+    setLastActivity(Date.now());
+    setAutoFade(false);
+  }, []);
+
+  const opacity = autoFade && !isHovered ? "opacity-60" : "opacity-100";
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -167,28 +190,33 @@ export const ToolsRail: React.FC = () => {
   }, [setMode, setCurrentTool, setLineStart, showWire, setShowWire, cycleEnv, canUndo, undo, canRedo, redo, rotateBlockHorizontal, rotateBlockVertical]);
 
   return (
-    <div className="flex items-center gap-4 rounded-lg border bg-card/95 backdrop-blur px-4 py-3 shadow-lg">
+    <div 
+      className={`flex items-center gap-6 rounded-xl border bg-card/95 backdrop-blur px-6 py-4 shadow-xl transition-all duration-300 ${opacity}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleActivity}
+    >
       {/* Indicador de modo compacto */}
-      <div className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium ${
-        isMode(mode, "place") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-        isMode(mode, "delete") ? "bg-rose-50 text-rose-700 border-rose-200" :
-        "bg-sky-50 text-sky-700 border-sky-200"
-      }`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${
-          isMode(mode, "place") ? "bg-emerald-500" :
-          isMode(mode, "delete") ? "bg-rose-500" :
-          "bg-sky-500"
-        }`} />
-        <span className="uppercase tracking-wide">
+      <div className={`flex items-center gap-2.5 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
+        isMode(mode, "place") ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100" :
+        isMode(mode, "delete") ? "bg-rose-50 text-rose-700 border-rose-200 shadow-rose-100" :
+        "bg-sky-50 text-sky-700 border-sky-200 shadow-sky-100"
+      } shadow-md`}>
+        <span className={`h-3 w-3 rounded-full ${
+          isMode(mode, "place") ? "bg-emerald-500 shadow-emerald-300" :
+          isMode(mode, "delete") ? "bg-rose-500 shadow-rose-300" :
+          "bg-sky-500 shadow-sky-300"
+        } shadow-md animate-pulse`} />
+        <span className="uppercase tracking-wide font-semibold">
           {isMode(mode, "place") ? "Colocar" : isMode(mode, "delete") ? "Remover" : "Pincel"}
         </span>
       </div>
 
       {/* Divisor */}
-      <div className="h-7 w-px bg-border/50" />
+      <div className="h-8 w-px bg-border/50" />
 
       {/* Ferramentas principais - horizontal */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <Tool
           label="Modo Colocar"
           pressed={isMode(mode, "place")}
@@ -217,7 +245,13 @@ export const ToolsRail: React.FC = () => {
         >
           <Brush className="h-4 w-4" />
         </Tool>
+      </div>
 
+      {/* Divisor */}
+      <div className="h-8 w-px bg-border/50" />
+
+      {/* Ferramentas avançadas */}
+      <div className="flex items-center gap-2">
         <Tool
           label={lineStart ? "Ferramenta Linha (Clique para finalizar)" : "Ferramenta Linha"}
           pressed={currentTool === "line"}
@@ -269,10 +303,10 @@ export const ToolsRail: React.FC = () => {
       </div>
 
       {/* Divisor */}
-      <div className="h-7 w-px bg-border/50" />
+      <div className="h-8 w-px bg-border/50" />
 
       {/* Ferramentas de rotação */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <Tool
           label="Rotação Horizontal"
           onPressedChange={rotateBlockHorizontal}
@@ -303,10 +337,10 @@ export const ToolsRail: React.FC = () => {
       </div>
 
       {/* Divisor */}
-      <div className="h-7 w-px bg-border/50" />
+      <div className="h-8 w-px bg-border/50" />
 
       {/* Ações de histórico */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <Tool 
           label="Desfazer" 
           onPressedChange={() => canUndo && undo()}
@@ -326,10 +360,10 @@ export const ToolsRail: React.FC = () => {
       </div>
 
       {/* Divisor */}
-      <div className="h-7 w-px bg-border/50" />
+      <div className="h-8 w-px bg-border/50" />
 
       {/* Configurações */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <Tool
           label="Wireframe"
           pressed={showWire}

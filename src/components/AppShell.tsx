@@ -7,7 +7,6 @@ type Props = {
   right?: React.ReactNode;
   bottom?: React.ReactNode;
   children: React.ReactNode;
-  toolsOverlay?: React.ReactNode;
 };
 
 export const AppShell: React.FC<Props> = ({
@@ -16,7 +15,6 @@ export const AppShell: React.FC<Props> = ({
   right,
   // bottom,
   children,
-  toolsOverlay,
 }) => {
   const topH = UI_SHELL.topHeight;
   // const bottomH = UI_SHELL.bottomHeight;
@@ -42,11 +40,6 @@ export const AppShell: React.FC<Props> = ({
         </aside>
         <main className="relative h-full w-full">
           {children}
-          {toolsOverlay && (
-            <div className="absolute left-4 top-4 z-30">
-              {toolsOverlay}
-            </div>
-          )}
         </main>
         <aside className="border-l bg-card">
           <div className="h-full overflow-y-auto">{right}</div>

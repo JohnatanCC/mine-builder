@@ -13,7 +13,7 @@ import { TopBar } from "./ui/TopBar";
 import { Inspector } from "./ui/Inspector";
 import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
-import { Hotbar3D } from "./components/Hotbar3D";
+import { BottomPanel } from "./components/BottomPanel";
 import { ToolHint } from "./components/ToolHint";
 import { AmbientAudio } from "./components/AmbientAudio";
 import { Keybinds } from "./components/Keybinds";
@@ -43,42 +43,41 @@ export default function App() {
   const render = useWorld(s => s.renderSettings);
 
   return (
-    <AppShell
-      topBar={<TopBar />}
-      left={<BlockCatalog />}
-      right={<Inspector />}
-    >
-      <div className="relative h-full w-full bg-transparent">
-        <SkyBackdrop />
-        <Canvas
-          key={`cv-${preset}`}
-          camera={{ position: [50, 20, 40], fov: 30 }}
-          shadows={render.shadows}
-          dpr={render.dpr}
-          gl={{ antialias: render.antialias, powerPreference: preset === "performance" ? "low-power" : "high-performance" }}
-        >
-
-
-          <CameraControls />
-          <Highlight />
-          <LinePreview />
-          <CopyPreview />
-          <Lights />
-          <World />
-          <Ground />
-          <RemoveBurst />
-          <WireGrid />
-          <WireframeAll />
-        </Canvas>
-
-      </div>
-      <FpsMeter />
-      <CommandMenu /> {/* Ctrl+K */}
-      <ToolHint />
-      <Hotbar3D />
-      <AmbientAudio />
-      <Keybinds />
-      <LoadingOverlay />
-    </AppShell>
+    <>
+      <AppShell
+        topBar={<TopBar />}
+        left={<BlockCatalog />}
+        right={<Inspector />}
+      >
+        <div className="relative h-full w-full bg-transparent pb-20">
+          <SkyBackdrop />
+          <Canvas
+            key={`cv-${preset}`}
+            camera={{ position: [50, 20, 40], fov: 30 }}
+            shadows={render.shadows}
+            dpr={render.dpr}
+            gl={{ antialias: render.antialias, powerPreference: preset === "performance" ? "low-power" : "high-performance" }}
+          >
+            <CameraControls />
+            <Highlight />
+            <LinePreview />
+            <CopyPreview />
+            <Lights />
+            <World />
+            <Ground />
+            <RemoveBurst />
+            <WireGrid />
+            <WireframeAll />
+          </Canvas>
+        </div>
+        <FpsMeter />
+        <CommandMenu /> {/* Ctrl+K */}
+        <ToolHint />
+        <AmbientAudio />
+        <Keybinds />
+        <LoadingOverlay />
+      </AppShell>
+   
+    </>
   );
 }
