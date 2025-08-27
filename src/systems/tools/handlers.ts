@@ -32,7 +32,7 @@ export function handleToolClick(
       break;
 
     case "paint":
-      handlePaintTool(clickedPos, button, blockType, variant, rotation);
+      handlePaintTool(clickedPos, button, blockType);
       break;
 
     default:
@@ -117,7 +117,7 @@ function handleCopyTool(
   
   if (button === 2) {
     // Botão direito - deleta estrutura conectada
-    const blocksDeleted = executeDeleteConnectedTool(pos, blockType, variant, rotation);
+    const blocksDeleted = executeDeleteConnectedTool(pos);
     
     if (blocksDeleted > 0) {
       toast(`Estrutura removida: ${blocksDeleted} blocos`);
@@ -162,9 +162,7 @@ function handleCopyTool(
 function handlePaintTool(
   pos: Pos,
   button: 0 | 1 | 2,
-  blockType: BlockType,
-  variant: BlockVariant,
-  rotation: BlockRotation
+  blockType: BlockType
 ) {
   const store = useWorld.getState();
   

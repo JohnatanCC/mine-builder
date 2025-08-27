@@ -12,6 +12,14 @@ export function executeLineTool(start: Pos, end: Pos, blockType: BlockType, vari
   const points = calculateLineBetweenPoints(start, end);
   const store = useWorld.getState();
   
+  // Salva configuração atual temporariamente
+  const originalVariant = store.currentVariant;
+  const originalRotation = store.currentRotation;
+  
+  // Define a variante e rotação temporariamente
+  store.setCurrentVariant(variant);
+  store.setCurrentRotation(rotation);
+  
   // Inicia um stroke para histórico
   store.beginStroke();
   
@@ -22,6 +30,10 @@ export function executeLineTool(start: Pos, end: Pos, blockType: BlockType, vari
   
   // Finaliza o stroke
   store.endStroke();
+  
+  // Restaura configuração original
+  store.setCurrentVariant(originalVariant);
+  store.setCurrentRotation(originalRotation);
   
   return points.length;
 }
@@ -66,6 +78,14 @@ export function executeCopyTool(
     return 0;
   }
   
+  // Salva configuração atual temporariamente
+  const originalVariant = store.currentVariant;
+  const originalRotation = store.currentRotation;
+  
+  // Define a variante e rotação temporariamente
+  store.setCurrentVariant(variant);
+  store.setCurrentRotation(rotation);
+  
   // Inicia um stroke para histórico
   store.beginStroke();
   
@@ -73,13 +93,18 @@ export function executeCopyTool(
   emptyPositions.forEach(({ pos, originalIndex }) => {
     const originalBlock = blocks.get(makeKey(...connectedBlocks[originalIndex]));
     if (originalBlock) {
-      // Coloca o novo bloco mantendo o tipo original
-      store.setBlock(pos, originalBlock.type);
+      // Usa o blockType fornecido ou mantém o tipo original se blockType não for especificado
+      const typeToUse = blockType || originalBlock.type;
+      store.setBlock(pos, typeToUse);
     }
   });
   
   // Finaliza o stroke
   store.endStroke();
+  
+  // Restaura configuração original
+  store.setCurrentVariant(originalVariant);
+  store.setCurrentRotation(originalRotation);
   
   return emptyPositions.length;
 }
@@ -87,7 +112,7 @@ export function executeCopyTool(
 /**
  * Executa a remoção de estruturas conectadas
  */
-export function executeDeleteConnectedTool(clickPos: Pos, blockType: BlockType, variant: BlockVariant, rotation: BlockRotation) {
+export function executeDeleteConnectedTool(clickPos: Pos) {
   const store = useWorld.getState();
   const blocks = store.blocks;
   
