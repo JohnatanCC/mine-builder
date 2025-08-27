@@ -70,11 +70,17 @@ const FACE_ALIASES: Record<string, string[]> = {
   all: ["all"],
   top: ["top", "up"],
   bottom: ["bottom", "down"],
-  north: ["north", "front", "z+", "forward"],
-  south: ["south", "back", "z-", "backward"],
-  east: ["east", "x+", "right"],
-  west: ["west", "x-", "left"],
+  "top-bottom": ["top-bottom", "topbottom", "top_bottom"],
+  front: ["front", "north", "z+", "forward", "side1"],
+  north: ["north", "front", "z+", "forward", "side1"],
+  south: ["south", "back", "z-", "backward", "side2"],
+  east: ["east", "x+", "right", "side3"],
+  west: ["west", "x-", "left", "side4"],
   side: ["side"],
+  side1: ["side1", "north", "front"],
+  side2: ["side2", "south", "back"],
+  side3: ["side3", "east", "right"],
+  side4: ["side4", "west", "left"],
 };
 
 function findInMap(

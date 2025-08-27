@@ -10,12 +10,64 @@ import {
   findBlockFileURL,
   loadVoxelTexture,
   placeholderTexture,
-  debugListAvailable,
 } from "./pngLoader";
 import type { BlockType } from "@/core/types";
 
 // 🔒 cache de materiais por (pack|shading|type)
 const MAT_CACHE = new Map<string, Promise<Material[]>>();
+
+// Tipo para mapeamento de texturas
+interface TextureMapping {
+  top: string | undefined;
+  bottom: string | undefined;
+  north: string | undefined;
+  south: string | undefined;
+  east: string | undefined;
+  west: string | undefined;
+}
+
+/**
+ * Sistema dinâmico de resolução de texturas para blocos
+ * Suporta top-bottom, side1-4, front e todas as variações existentes
+ */
+export function resolveBlockTextures(type: BlockType, pack?: string): TextureMapping {
+  // URLs específicas por face
+  const urlAll = findBlockFileURL(type, "all", pack);
+  const urlIcon = findBlockFileURL(type, "icon", pack);
+  const urlTop = findBlockFileURL(type, "top", pack);
+  const urlBottom = findBlockFileURL(type, "bottom", pack);
+  const urlTopBottom = findBlockFileURL(type, "top-bottom" as any, pack);
+  const urlSide = findBlockFileURL(type, "side", pack);
+  const urlFront = findBlockFileURL(type, "front" as any, pack);
+  
+  // URLs específicas para cada lado
+  const urlNorth = findBlockFileURL(type, "north", pack) || findBlockFileURL(type, "side1" as any, pack) || urlFront;
+  const urlSouth = findBlockFileURL(type, "south", pack) || findBlockFileURL(type, "side2" as any, pack);
+  const urlEast = findBlockFileURL(type, "east", pack) || findBlockFileURL(type, "side3" as any, pack);
+  const urlWest = findBlockFileURL(type, "west", pack) || findBlockFileURL(type, "side4" as any, pack);
+
+  // Lógica de fallback inteligente
+  const getTopTexture = () => {
+    return urlTop ?? urlTopBottom ?? urlAll ?? urlSide ?? urlIcon;
+  };
+
+  const getBottomTexture = () => {
+    return urlBottom ?? urlTopBottom ?? urlAll ?? urlSide ?? urlIcon;
+  };
+
+  const getSideTexture = (specificUrl?: string) => {
+    return specificUrl ?? urlSide ?? urlAll ?? urlTop ?? urlIcon;
+  };
+
+  return {
+    top: getTopTexture(),
+    bottom: getBottomTexture(),
+    north: getSideTexture(urlNorth),
+    south: getSideTexture(urlSouth),
+    east: getSideTexture(urlEast),
+    west: getSideTexture(urlWest),
+  };
+}
 
 function cacheKey(type: BlockType, shading: "standard" | "lambert", pack?: string) {
   return `${pack ?? "legacy"}|${shading}|${type}`;
@@ -45,31 +97,8 @@ export async function buildBlockMaterialsV1(
     metalness: 0,
   };
 
-  const urlAll = findBlockFileURL(type, "all", pack);
-  const urlIcon = findBlockFileURL(type, "icon", pack);
-  const urlTop = findBlockFileURL(type, "top", pack);
-  const urlBottom = findBlockFileURL(type, "bottom", pack);
-  const urlNorth = findBlockFileURL(type, "north", pack);
-  const urlSouth = findBlockFileURL(type, "south", pack);
-  const urlEast = findBlockFileURL(type, "east", pack);
-  const urlWest = findBlockFileURL(type, "west", pack);
-  const urlSide = findBlockFileURL(type, "side", pack);
-
-  const faceURL = {
-    px: urlEast ?? urlSide ?? urlAll ?? urlTop ?? urlIcon,
-    nx: urlWest ?? urlSide ?? urlAll ?? urlTop ?? urlIcon,
-    py: urlTop ?? urlAll ?? urlSide ?? urlNorth ?? urlIcon,
-    ny: urlBottom ?? urlAll ?? urlSide ?? urlSouth ?? urlIcon,
-    pz: urlSouth ?? urlSide ?? urlAll ?? urlTop ?? urlIcon,
-    nz: urlNorth ?? urlSide ?? urlAll ?? urlTop ?? urlIcon,
-  } as const;
-
-  if (!Object.values(faceURL).some(Boolean)) {
-    console.warn(
-      `[textures] Nenhuma PNG encontrada para '${type}'. Encontrado:`,
-      debugListAvailable(type, pack)
-    );
-  }
+  // Sistema dinâmico de mapeamento de texturas
+  const textureMapping = await resolveBlockTextures(type, pack);
 
   async function tex(url?: string): Promise<Texture> {
     if (!url) return placeholderTexture();
@@ -80,13 +109,14 @@ export async function buildBlockMaterialsV1(
     }
   }
 
+  // Carrega todas as texturas necessárias
   const [tPX, tNX, tPY, tNY, tPZ, tNZ] = await Promise.all([
-    tex(faceURL.px),
-    tex(faceURL.nx),
-    tex(faceURL.py),
-    tex(faceURL.ny),
-    tex(faceURL.pz),
-    tex(faceURL.nz),
+    tex(textureMapping.east),
+    tex(textureMapping.west),
+    tex(textureMapping.top),
+    tex(textureMapping.bottom),
+    tex(textureMapping.south),
+    tex(textureMapping.north),
   ]);
 
   const mk = (map: Texture): Material =>

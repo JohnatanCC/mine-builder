@@ -438,14 +438,28 @@ export function Block({ pos, type, variant = "block", rotation = { x: 0, y: 0, z
 
   const materialToUse = React.useMemo(() => {
     const tune = (m: THREE.Material) => {
-      if (type === 'glass') {
+      // Verifica se é qualquer tipo de vidro
+      const isGlass = type === 'glass' || type.includes('_glass');
+      
+      // Verifica se é uma grade (barras com partes vazias/transparentes)
+      const isGrate = type.includes('_bars') || type.includes('_grate');
+      
+      if (isGlass || isGrate) {
         applyMaterialProperties(m, {
           transparent: true,
-          opacity: 0.86,
-          depthWrite: false
+          opacity: isGrate ? 0.95 : 0.86, // Grades um pouco menos transparentes que vidros
+          depthWrite: false,
+          alphaTest: isGrate ? 0.1 : 0, // Grades usam alphaTest para cortar partes vazias
         });
+        
+        // Para grades, também aplicamos DoubleSide para melhor visualização
+        if (isGrate) {
+          const matAny = m as any;
+          matAny.side = THREE.DoubleSide;
+        }
         return;
       }
+      
       if (type === 'oak_leaves' || type === 'spruce_leaves' || type === 'birch_leaves') {
         applyMaterialProperties(m, {
           transparent: true,

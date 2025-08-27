@@ -31,7 +31,7 @@ export const TopBar: React.FC = () => {
         <div className="flex items-center gap-2">
           <img src={Logo} alt="Logo" className="w-6 h-6" />
           <span className="font-semibold">Mine Builder</span>
-          <span className="text-xs text-muted-foreground">v0.4.0</span>
+          <span className="text-xs text-muted-foreground">v0.5.0</span>
         </div>
         
         <div className="text-xs text-muted-foreground">

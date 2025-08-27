@@ -96,6 +96,12 @@ const createVariantWireframe = (variant: string): THREE.BufferGeometry => {
       return new THREE.EdgesGeometry(panel);
     }
     
+    case "grate": {
+      // Wireframe simples para grade (painel fino)
+      const grate = new THREE.BoxGeometry(1.02, 1.02, 0.135);
+      return new THREE.EdgesGeometry(grate);
+    }
+    
     default: // "block"
       return new THREE.EdgesGeometry(new THREE.BoxGeometry(1.02, 1.02, 1.02));
   }

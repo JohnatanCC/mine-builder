@@ -1,4 +1,4 @@
-// UPDATE: src/ui/panels/BlockCatalog.tsx - Melhorias pontuais
+// UPDATE: src/ui/panels/BlockCatalog.tsx - Melhorias organizacionais v0.5.0
 import * as React from "react";
 import { useMemo, useState, useEffect } from "react";
 import { REGISTRY, getLabel } from "@/core/blocks/registry";
@@ -8,7 +8,7 @@ import { BlockIcon } from "@/ui/BlockIcon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowUpAZ, Search, X, Hammer, Leaf, Sparkles, Settings } from "lucide-react";
+import { ArrowUpAZ, Search, X, Grid3X3, TreePine, Square, Palette, Settings, Leaf, Mountain } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -22,25 +22,47 @@ function useAllBlocks(): BlockType[] {
 
 // Categorização de blocos
 const BLOCK_CATEGORIES = {
-  building: {
-    label: "Construção",
-    color: "text-slate-600",
-    blocks: ["stone", "brick", "cobblestone", "concrete", "glass", "iron", "steel"]
+  all: {
+    label: "Todos",
+    color: "text-slate-100",
+    icon: Grid3X3,
+    activeColor: "data-[state=active]:text-slate-700 data-[state=active]:bg-slate-50"
   },
-  nature: {
-    label: "Natureza",
-    color: "text-emerald-600", 
-    blocks: ["wood", "log", "leaves", "grass", "dirt", "sand", "water", "lava"]
+  stone: {
+    label: "Pedras",
+    color: "text-stone-300",
+    icon: Mountain,
+    activeColor: "data-[state=active]:text-stone-700 data-[state=active]:bg-stone-50"
+  },
+  wood: {
+    label: "Madeiras",
+    color: "text-amber-300",
+    icon: TreePine,
+    activeColor: "data-[state=active]:text-amber-700 data-[state=active]:bg-amber-50"
+  },
+  glass: {
+    label: "Vidros", 
+    color: "text-cyan-300",
+    icon: Square,
+    activeColor: "data-[state=active]:text-cyan-700 data-[state=active]:bg-cyan-50"
   },
   decoration: {
     label: "Decoração",
-    color: "text-purple-600",
-    blocks: ["wool", "carpet", "flower", "painting", "colored"]
+    color: "text-purple-300",
+    icon: Palette,
+    activeColor: "data-[state=active]:text-purple-700 data-[state=active]:bg-purple-50"
   },
   utility: {
     label: "Utilitários", 
-    color: "text-orange-600",
-    blocks: ["ladder", "door", "chest", "workbench", "tool"]
+    color: "text-orange-300",
+    icon: Settings,
+    activeColor: "data-[state=active]:text-orange-700 data-[state=active]:bg-orange-50"
+  },
+  nature: {
+    label: "Natureza",
+    color: "text-emerald-300",
+    icon: Leaf,
+    activeColor: "data-[state=active]:text-emerald-700 data-[state=active]:bg-emerald-50"
   }
 } as const;
 
@@ -48,10 +70,13 @@ type BlockCategory = keyof typeof BLOCK_CATEGORIES;
 
 function categorizeBlocks(blocks: BlockType[]): Record<BlockCategory, BlockType[]> {
   const categorized: Record<BlockCategory, BlockType[]> = {
-    building: [],
-    nature: [],
+    all: [],
+    stone: [],
+    wood: [],
+    glass: [],
     decoration: [],
-    utility: []
+    utility: [],
+    nature: []
   };
 
   blocks.forEach(blockType => {
@@ -59,23 +84,26 @@ function categorizeBlocks(blocks: BlockType[]): Record<BlockCategory, BlockType[
     if (!blockDef) return;
     
     const category = blockDef.category;
-    const blockName = blockType.toLowerCase();
     
-    // Categorização baseada em categoria e nome do bloco
-    if (category === 'stone' || category === 'brick' || 
-        BLOCK_CATEGORIES.building.blocks.some(keyword => blockName.includes(keyword))) {
-      categorized.building.push(blockType);
-    } else if (category === 'wood' || category === 'log' || category === 'leaves' ||
-               BLOCK_CATEGORIES.nature.blocks.some(keyword => blockName.includes(keyword))) {
-      categorized.nature.push(blockType);
-    } else if (BLOCK_CATEGORIES.decoration.blocks.some(keyword => blockName.includes(keyword)) ||
-               blockName.includes('color') || blockName.includes('dye')) {
+    // Adicionar a "Todos"
+    categorized.all.push(blockType);
+    
+    // Categorização baseada no registry e propriedades
+    if (category === 'stone' || category === 'brick' || category === 'concrete' || category === 'copper' || category === 'tuff') {
+      categorized.stone.push(blockType);
+    } else if (category === 'wood' || category === 'log') {
+      categorized.wood.push(blockType);
+    } else if (category === 'glass' || blockDef.isGlass) {
+      categorized.glass.push(blockType);
+    } else if (blockType.includes('wool') || blockType === 'bookshelf') {
       categorized.decoration.push(blockType);
-    } else if (BLOCK_CATEGORIES.utility.blocks.some(keyword => blockName.includes(keyword))) {
-      categorized.utility.push(blockType);
+    } else if (category === 'leaves' || blockType.includes('grass') || blockType.includes('dirt') || 
+               blockType === 'moss_block' || blockType === 'mud' || blockType === 'snow' || 
+               blockType === 'shroomlight') {
+      categorized.nature.push(blockType);
     } else {
-      // Default para construção se não categorizado
-      categorized.building.push(blockType);
+      // Utilitários: crafting_table, redstone_lamp_on, iron_bars, trapdoors, etc.
+      categorized.utility.push(blockType);
     }
   });
 
@@ -151,7 +179,7 @@ export const BlockCatalog: React.FC = () => {
   const setCurrent = useWorld((s) => s.setCurrent);
 
   const all = useAllBlocks();
-  const [category, setCategory] = useState<BlockCategory>("building");
+  const [category, setCategory] = useState<BlockCategory>("all");
   const [q, setQ] = useState("");
   const [alpha, setAlpha] = useState(false);
 
@@ -192,12 +220,15 @@ export const BlockCatalog: React.FC = () => {
         return;
       }
 
-      // Números 1-4 para categorias
+      // Números 1-7 para categorias
       const categoryKeys: Record<string, BlockCategory> = {
-        '1': 'building',
-        '2': 'nature', 
-        '3': 'decoration',
-        '4': 'utility'
+        '1': 'all',
+        '2': 'stone',
+        '3': 'wood', 
+        '4': 'glass',
+        '5': 'decoration',
+        '6': 'utility',
+        '7': 'nature'
       };
       
       if (categoryKeys[e.key]) {
@@ -210,45 +241,35 @@ export const BlockCatalog: React.FC = () => {
   }, []);
 
   return (
-    <div className="h-full flex flex-col bg-transparent">
+    <div className="h-full max-h-screen flex flex-col bg-transparent">
       {/* Header com categorias */}
-      <div className="mb-2 space-y-2 p-2 border-b">
+      <div className="mb-2 space-y-2 p-2 border-b flex-shrink-0">
         {/* Tabs de categoria */}
         <div>
           <Tabs value={category} onValueChange={(v) => setCategory(v as BlockCategory)}>
-            <TabsList className="h-7 w-full grid grid-cols-4 p-0 gap-0">
-              <TabsTrigger 
-                value="building" 
-                className="h-6 px-1 text-xs font-medium transition-all data-[state=active]:text-amber-700 data-[state=active]:bg-amber-50 relative flex items-center justify-center" 
-                title="Construção (1)"
-              >
-                <Hammer className="absolute -top-2 left-1/2 transform -translate-x-1/2 h-3 w-3 text-amber-600" />
-                <span className="text-[10px] leading-none">Construção</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="nature" 
-                className="h-6 px-1 text-xs font-medium transition-all data-[state=active]:text-green-700 data-[state=active]:bg-green-50 relative flex items-center justify-center"
-                title="Natureza (2)"
-              >
-                <Leaf className="absolute -top-2 left-1/2 transform -translate-x-1/2 h-3 w-3 text-green-600" />
-                <span className="text-[10px] leading-none">Natureza</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="decoration" 
-                className="h-6 px-1 text-xs font-medium transition-all data-[state=active]:text-purple-700 data-[state=active]:bg-purple-50 relative flex items-center justify-center"
-                title="Decoração (3)"
-              >
-                <Sparkles className="absolute -top-2 left-1/2 transform -translate-x-1/2 h-3 w-3 text-purple-600" />
-                <span className="text-[10px] leading-none">Decoração</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="utility" 
-                className="h-6 px-1 text-xs font-medium transition-all data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 relative flex items-center justify-center"
-                title="Utilidades (4)"
-              >
-                <Settings className="absolute -top-2 left-1/2 transform -translate-x-1/2 h-3 w-3 text-blue-600" />
-                <span className="text-[10px] leading-none">Utilidades</span>
-              </TabsTrigger>
+            <TabsList className="h-auto w-full flex flex-wrap justify-center p-1 gap-x-1 gap-y-2 min-h-[3rem] bg-transparent">
+              {Object.entries(BLOCK_CATEGORIES).map(([key, cat]) => {
+                const IconComponent = cat.icon;
+                const categoryNumber = Object.keys(BLOCK_CATEGORIES).indexOf(key) + 1;
+                
+                return (
+                    <TabsTrigger
+                      key={key}
+                      value={key as BlockCategory}
+                      className={`h-8 px-3 cursor-pointer text-xs font-medium transition-all relative flex items-center justify-center min-w-[4rem] border border-border ${cat.activeColor}`}
+                      title={`${cat.label} (${categoryNumber})`}
+                    >
+                      <IconComponent
+                        className={`absolute -top-2 left-1/2 transform -translate-x-1/2 h-3 w-3 ${cat.color}`}
+                      />
+                      <span
+                        className={`text-[10px] leading-none mt-1 ${cat.color}`}
+                      >
+                        {cat.label}
+                      </span>
+                    </TabsTrigger>
+                );
+              })}
             </TabsList>
           </Tabs>
         </div>
@@ -295,26 +316,28 @@ export const BlockCatalog: React.FC = () => {
       </div>
 
       {/* Grid de blocos */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-        {filtered.length > 0 ? (
-          <BlocksGrid items={filtered} current={current} onPick={setCurrent} />
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="text-sm text-muted-foreground mb-2">
-              {q ? `Nenhum bloco encontrado para "${q}"` : "Nenhum bloco disponível"}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="h-full max-h-[65vh] overflow-y-auto scrollbar-thin px-2 pb-2">
+          {filtered.length > 0 ? (
+            <BlocksGrid items={filtered} current={current} onPick={setCurrent} />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-sm text-muted-foreground mb-2">
+                {q ? `Nenhum bloco encontrado para "${q}"` : "Nenhum bloco disponível"}
+              </div>
+              {q && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => setQ("")}
+                  className="text-xs"
+                >
+                  Limpar busca
+                </Button>
+              )}
             </div>
-            {q && (
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => setQ("")}
-                className="text-xs"
-              >
-                Limpar busca
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
