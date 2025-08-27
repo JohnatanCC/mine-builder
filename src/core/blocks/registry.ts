@@ -6,8 +6,10 @@ import { resolveBlockIconURL } from "@/systems/textures/blockIcon";
 export type BlockDef = {
   id: BlockType;
   label: string;
-  category: "stone" | "wood" | "log" | "leaves" | "misc" | "brick" | "concrete";
+  category: "stone" | "wood" | "log" | "leaves" | "misc" | "brick" | "concrete" | "glass" | "copper" | "tuff";
   isLeaves?: boolean;
+  isGlass?: boolean;
+  isGrate?: boolean; // Para grades/barras com partes vazias
   material?: () => THREE.Material | THREE.Material[];
   preview: () => THREE.Texture;
 };
@@ -43,244 +45,178 @@ function loadPreviewTextureFromFolder(type: BlockType): THREE.Texture {
   return makePlaceholderTex();
 }
 
+// Função auxiliar para criar entradas do registry automaticamente
+function createBlockDef(
+  id: BlockType, 
+  category: BlockDef["category"], 
+  options?: { isLeaves?: boolean; isGlass?: boolean; isGrate?: boolean }
+): BlockDef {
+  return {
+    id,
+    label: BLOCK_LABEL[id],
+    category,
+    ...(options?.isLeaves && { isLeaves: true }),
+    ...(options?.isGlass && { isGlass: true }),
+    ...(options?.isGrate && { isGrate: true }),
+    preview: () => loadPreviewTextureFromFolder(id),
+  };
+}
+
 export const REGISTRY: Readonly<Record<BlockType, Readonly<BlockDef>>> = Object.freeze({
-  // pedras
-  stone: {
-    id: "stone",
-    label: BLOCK_LABEL.stone,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("stone"),
-  },
-  stone_brick: {
-    id: "stone_brick",
-    label: BLOCK_LABEL.stone_brick,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("stone_brick"),
-  },
-  chiseled_stone_bricks: {
-    id: "chiseled_stone_bricks",
-    label: BLOCK_LABEL.chiseled_stone_bricks,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("chiseled_stone_bricks"),
-  },
-  cobblestone: {
-    id: "cobblestone",
-    label: BLOCK_LABEL.cobblestone,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("cobblestone"),
-  },
-  deepslate_tiles: {
-    id: "deepslate_tiles",
-    label: BLOCK_LABEL.deepslate_tiles,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("deepslate_tiles"),
-  },
-  amethyst_block: {
-    id: "amethyst_block",
-    label: BLOCK_LABEL.amethyst_block,
-    category: "stone",
-    preview: () => loadPreviewTextureFromFolder("amethyst_block"),
-  },
-  glass: {
-    id: "glass",
-    label: BLOCK_LABEL.glass,
-    category: "misc",
-    preview: () => loadPreviewTextureFromFolder("glass"),
-  },
+  // Pedras
+  stone: createBlockDef("stone", "stone"),
+  stone_brick: createBlockDef("stone_brick", "stone"),
+  chiseled_stone_bricks: createBlockDef("chiseled_stone_bricks", "stone"),
+  cobblestone: createBlockDef("cobblestone", "stone"),
+  deepslate_tiles: createBlockDef("deepslate_tiles", "stone"),
+  amethyst_block: createBlockDef("amethyst_block", "stone"),
+  bedrock: createBlockDef("bedrock", "stone"),
 
-  //brick
-  brick: {
-    id: "brick",
-    label: BLOCK_LABEL.brick,
-    category: "brick",
-    preview: () => loadPreviewTextureFromFolder("brick"),
-  },
-  redstone_lamp_on: {
-    id: "redstone_lamp_on",
-    label: BLOCK_LABEL.redstone_lamp_on,
-    category: "misc",
-    preview: () => loadPreviewTextureFromFolder("redstone_lamp_on"),
-  },
+  // Vidros
+  glass: createBlockDef("glass", "glass", { isGlass: true }),
+  black_stained_glass: createBlockDef("black_stained_glass", "glass", { isGlass: true }),
+  blue_stained_glass: createBlockDef("blue_stained_glass", "glass", { isGlass: true }),
+  brown_stained_glass: createBlockDef("brown_stained_glass", "glass", { isGlass: true }),
+  cyan_stained_glass: createBlockDef("cyan_stained_glass", "glass", { isGlass: true }),
+  gray_stained_glass: createBlockDef("gray_stained_glass", "glass", { isGlass: true }),
+  green_stained_glass: createBlockDef("green_stained_glass", "glass", { isGlass: true }),
+  light_blue_stained_glass: createBlockDef("light_blue_stained_glass", "glass", { isGlass: true }),
+  light_gray_stained_glass: createBlockDef("light_gray_stained_glass", "glass", { isGlass: true }),
+  lime_stained_glass: createBlockDef("lime_stained_glass", "glass", { isGlass: true }),
+  magenta_stained_glass: createBlockDef("magenta_stained_glass", "glass", { isGlass: true }),
+  orange_stained_glass: createBlockDef("orange_stained_glass", "glass", { isGlass: true }),
+  pink_stained_glass: createBlockDef("pink_stained_glass", "glass", { isGlass: true }),
+  purple_stained_glass: createBlockDef("purple_stained_glass", "glass", { isGlass: true }),
+  red_stained_glass: createBlockDef("red_stained_glass", "glass", { isGlass: true }),
+  white_stained_glass: createBlockDef("white_stained_glass", "glass", { isGlass: true }),
+  yellow_stained_glass: createBlockDef("yellow_stained_glass", "glass", { isGlass: true }),
+  tinted_glass: createBlockDef("tinted_glass", "glass", { isGlass: true }),
 
-  // chão/misc
-  grass: {
-    id: "grass",
-    label: BLOCK_LABEL.grass,
-    category: "misc",
-    preview: () => loadPreviewTextureFromFolder("grass"),
-  },
-  dirt: {
-    id: "dirt",
-    label: BLOCK_LABEL.dirt,
-    category: "misc",
-    preview: () => loadPreviewTextureFromFolder("dirt"),
-  },
+  // Tijolos
+  brick: createBlockDef("brick", "brick"),
 
-  // concretos
-  white_concrete: {
-    id: "white_concrete",
-    label: BLOCK_LABEL.white_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("white_concrete"),
-  },
-  gray_concrete: {
-    id: "gray_concrete",
-    label: BLOCK_LABEL.gray_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("gray_concrete"),
-  },
-  black_concrete: {
-    id: "black_concrete",
-    label: BLOCK_LABEL.black_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("black_concrete"),
-  },
-  red_concrete: {
-    id: "red_concrete",
-    label: BLOCK_LABEL.red_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("red_concrete"),
-  },
-  blue_concrete: {
-    id: "blue_concrete",
-    label: BLOCK_LABEL.blue_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("blue_concrete"),
-  },
-  yellow_concrete: {
-    id: "yellow_concrete",
-    label: BLOCK_LABEL.yellow_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("yellow_concrete"),
-  },
-  green_concrete: {
-    id: "green_concrete",
-    label: BLOCK_LABEL.green_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("green_concrete"),
-  },
-  orange_concrete: {
-    id: "orange_concrete",
-    label: BLOCK_LABEL.orange_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("orange_concrete"),
-  },
-  purple_concrete: {
-    id: "purple_concrete",
-    label: BLOCK_LABEL.purple_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("purple_concrete"),
-  },
-  pink_concrete: {
-    id: "pink_concrete",
-    label: BLOCK_LABEL.pink_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("pink_concrete"),
-  },
-  cyan_concrete: {
-    id: "cyan_concrete",
-    label: BLOCK_LABEL.cyan_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("cyan_concrete"),
-  },
-  lime_concrete: {
-    id: "lime_concrete",
-    label: BLOCK_LABEL.lime_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("lime_concrete"),
-  },
-  magenta_concrete: {
-    id: "magenta_concrete",
-    label: BLOCK_LABEL.magenta_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("magenta_concrete"),
-  },
-  brown_concrete: {
-    id: "brown_concrete",
-    label: BLOCK_LABEL.brown_concrete,
-    category: "concrete",
-    preview: () => loadPreviewTextureFromFolder("brown_concrete"),
-  },
+  // Materiais básicos
+  redstone_lamp_on: createBlockDef("redstone_lamp_on", "misc"),
+  bookshelf: createBlockDef("bookshelf", "misc"),
+  crafting_table: createBlockDef("crafting_table", "misc"),
+  iron_bars: createBlockDef("iron_bars", "misc", { isGrate: true }),
 
-  // pranchas
-  oak_planks: {
-    id: "oak_planks",
-    label: BLOCK_LABEL.oak_planks,
-    category: "wood",
-    preview: () => loadPreviewTextureFromFolder("oak_planks"),
-  },
-  spruce_planks: {
-    id: "spruce_planks",
-    label: BLOCK_LABEL.spruce_planks,
-    category: "wood",
-    preview: () => loadPreviewTextureFromFolder("spruce_planks"),
-  },
-  birch_planks: {
-    id: "birch_planks",
-    label: BLOCK_LABEL.birch_planks,
-    category: "wood",
-    preview: () => loadPreviewTextureFromFolder("birch_planks"),
-  },
+  // Trapdoors
+  oak_trapdoor: createBlockDef("oak_trapdoor", "wood"),
 
-  // troncos
-  oak_log: {
-    id: "oak_log",
-    label: BLOCK_LABEL.oak_log,
-    category: "log",
-    preview: () => loadPreviewTextureFromFolder("oak_log"),
-  },
-  spruce_log: {
-    id: "spruce_log",
-    label: BLOCK_LABEL.spruce_log,
-    category: "log",
-    preview: () => loadPreviewTextureFromFolder("spruce_log"),
-  },
-  birch_log: {
-    id: "birch_log",
-    label: BLOCK_LABEL.birch_log,
-    category: "log",
-    preview: () => loadPreviewTextureFromFolder("birch_log"),
-  },
+  // Pedras especiais
+  mossy_cobblestone: createBlockDef("mossy_cobblestone", "stone"),
+  mossy_stone_bricks: createBlockDef("mossy_stone_bricks", "stone"),
+  polished_blackstone: createBlockDef("polished_blackstone", "stone"),
+  polished_blackstone_bricks: createBlockDef("polished_blackstone_bricks", "stone"),
+  polished_deepslate: createBlockDef("polished_deepslate", "stone"),
+  polished_diorite: createBlockDef("polished_diorite", "stone"),
+  polished_granite: createBlockDef("polished_granite", "stone"),
+  polished_tuff: createBlockDef("polished_tuff", "tuff"),
+  reinforced_deepslate: createBlockDef("reinforced_deepslate", "stone"),
+  obsidian: createBlockDef("obsidian", "stone"),
 
-  // folhas
-  oak_leaves: {
-    id: "oak_leaves",
-    label: BLOCK_LABEL.oak_leaves,
-    category: "leaves",
-    isLeaves: true,
-    preview: () => loadPreviewTextureFromFolder("oak_leaves"),
-  },
-  spruce_leaves: {
-    id: "spruce_leaves",
-    label: BLOCK_LABEL.spruce_leaves,
-    category: "leaves",
-    isLeaves: true,
-    preview: () => loadPreviewTextureFromFolder("spruce_leaves"),
-  },
-  birch_leaves: {
-    id: "birch_leaves",
-    label: BLOCK_LABEL.birch_leaves,
-    category: "leaves",
-    isLeaves: true,
-    preview: () => loadPreviewTextureFromFolder("birch_leaves"),
-  },
+  // Blocos naturais
+  moss_block: createBlockDef("moss_block", "misc"),
+  mud: createBlockDef("mud", "misc"),
+  mud_bricks: createBlockDef("mud_bricks", "brick"),
+  snow: createBlockDef("snow", "misc"),
+  shroomlight: createBlockDef("shroomlight", "misc"),
+
+  // Lãs coloridas
+  white_wool: createBlockDef("white_wool", "misc"),
+  light_gray_wool: createBlockDef("light_gray_wool", "misc"),
+  gray_wool: createBlockDef("gray_wool", "misc"),
+  black_wool: createBlockDef("black_wool", "misc"),
+  red_wool: createBlockDef("red_wool", "misc"),
+  orange_wool: createBlockDef("orange_wool", "misc"),
+  yellow_wool: createBlockDef("yellow_wool", "misc"),
+  lime_wool: createBlockDef("lime_wool", "misc"),
+  green_wool: createBlockDef("green_wool", "misc"),
+  cyan_wool: createBlockDef("cyan_wool", "misc"),
+  light_blue_wool: createBlockDef("light_blue_wool", "misc"),
+  blue_wool: createBlockDef("blue_wool", "misc"),
+  purple_wool: createBlockDef("purple_wool", "misc"),
+  magenta_wool: createBlockDef("magenta_wool", "misc"),
+  pink_wool: createBlockDef("pink_wool", "misc"),
+  brown_wool: createBlockDef("brown_wool", "misc"),
+
+  // Terreno
+  grass: createBlockDef("grass", "misc"),
+  dirt: createBlockDef("dirt", "misc"),
+
+  // Madeiras
+  oak_planks: createBlockDef("oak_planks", "wood"),
+  spruce_planks: createBlockDef("spruce_planks", "wood"),
+  birch_planks: createBlockDef("birch_planks", "wood"),
+
+  // Troncos
+  oak_log: createBlockDef("oak_log", "log"),
+  spruce_log: createBlockDef("spruce_log", "log"),
+  birch_log: createBlockDef("birch_log", "log"),
+
+  // Folhas
+  oak_leaves: createBlockDef("oak_leaves", "leaves", { isLeaves: true }),
+  spruce_leaves: createBlockDef("spruce_leaves", "leaves", { isLeaves: true }),
+  birch_leaves: createBlockDef("birch_leaves", "leaves", { isLeaves: true }),
+
+  // Concretos
+  white_concrete: createBlockDef("white_concrete", "concrete"),
+  gray_concrete: createBlockDef("gray_concrete", "concrete"),
+  black_concrete: createBlockDef("black_concrete", "concrete"),
+  red_concrete: createBlockDef("red_concrete", "concrete"),
+  blue_concrete: createBlockDef("blue_concrete", "concrete"),
+  yellow_concrete: createBlockDef("yellow_concrete", "concrete"),
+  green_concrete: createBlockDef("green_concrete", "concrete"),
+  orange_concrete: createBlockDef("orange_concrete", "concrete"),
+  purple_concrete: createBlockDef("purple_concrete", "concrete"),
+  pink_concrete: createBlockDef("pink_concrete", "concrete"),
+  cyan_concrete: createBlockDef("cyan_concrete", "concrete"),
+  lime_concrete: createBlockDef("lime_concrete", "concrete"),
+  magenta_concrete: createBlockDef("magenta_concrete", "concrete"),
+  brown_concrete: createBlockDef("brown_concrete", "concrete"),
+
+  // Blocos de cobre
+  copper_block: createBlockDef("copper_block", "copper"),
+  copper_bulb: createBlockDef("copper_bulb", "copper"),
+  copper_bulb_lit: createBlockDef("copper_bulb_lit", "copper"),
+  copper_grate: createBlockDef("copper_grate", "copper", { isGrate: true }),
+  copper_ore: createBlockDef("copper_ore", "copper"),
+  copper_trapdoor: createBlockDef("copper_trapdoor", "copper"),
+  cut_copper: createBlockDef("cut_copper", "copper"),
+  chiseled_copper: createBlockDef("chiseled_copper", "copper"),
+  exposed_copper: createBlockDef("exposed_copper", "copper"),
+  exposed_chiseled_copper: createBlockDef("exposed_chiseled_copper", "copper"),
+  exposed_copper_grate: createBlockDef("exposed_copper_grate", "copper", { isGrate: true }),
+  oxidized_copper: createBlockDef("oxidized_copper", "copper"),
+  oxidized_copper_grate: createBlockDef("oxidized_copper_grate", "copper", { isGrate: true }),
+  weathered_copper: createBlockDef("weathered_copper", "copper"),
+  weathered_copper_grate: createBlockDef("weathered_copper_grate", "copper", { isGrate: true }),
+
+  // Blocos de tuff
+  chiseled_tuff: createBlockDef("chiseled_tuff", "tuff"),
+  chiseled_tuff_bricks: createBlockDef("chiseled_tuff_bricks", "tuff"),
 
 } as const);
 
-// Lista ordenada para hotbar (ajuste como quiser)
+// Lista ordenada para hotbar (organizada por categorias)
 export const BLOCKS_ORDER: BlockType[] = [
-  // Pedras
+  // Pedras básicas
   "stone",
   "stone_brick", 
   "chiseled_stone_bricks",
   "cobblestone",
   "deepslate_tiles",
   "amethyst_block",
+  "bedrock",
   
   // Materiais básicos
   "glass",
   "brick",
   "redstone_lamp_on",
+  "bookshelf",
+  "crafting_table",
+  "iron_bars",
   
   // Madeiras
   "oak_planks",
@@ -321,13 +257,154 @@ export const BLOCKS_ORDER: BlockType[] = [
   "cyan_concrete",
   "lime_concrete",
   "magenta_concrete",
-  "brown_concrete"
+  "brown_concrete",
+
+  // Vidros coloridos
+  "white_stained_glass",
+  "light_gray_stained_glass",
+  "gray_stained_glass",
+  "black_stained_glass",
+  "red_stained_glass",
+  "orange_stained_glass",
+  "yellow_stained_glass",
+  "lime_stained_glass",
+  "green_stained_glass",
+  "cyan_stained_glass",
+  "light_blue_stained_glass",
+  "blue_stained_glass",
+  "purple_stained_glass",
+  "magenta_stained_glass",
+  "pink_stained_glass",
+  "brown_stained_glass",
+  "tinted_glass",
+
+  // Blocos de cobre (por estágio de oxidação)
+  "copper_block",
+  "cut_copper", 
+  "chiseled_copper",
+  "copper_grate",
+  "copper_bulb",
+  "copper_bulb_lit",
+  "copper_trapdoor",
+  "copper_ore",
+  "exposed_copper",
+  "exposed_chiseled_copper",
+  "exposed_copper_grate",
+  "weathered_copper",
+  "weathered_copper_grate",
+  "oxidized_copper",
+  "oxidized_copper_grate",
+
+  // Blocos de tuff
+  "chiseled_tuff",
+  "chiseled_tuff_bricks",
+  "polished_tuff",
+
+  // Novos blocos de pedra
+  "mossy_cobblestone",
+  "mossy_stone_bricks",
+  "polished_blackstone",
+  "polished_blackstone_bricks",
+  "polished_deepslate",
+  "polished_diorite",
+  "polished_granite",
+  "reinforced_deepslate",
+  "obsidian",
+
+  // Trapdoors
+  "oak_trapdoor",
+
+  // Blocos naturais
+  "moss_block",
+  "mud",
+  "mud_bricks",
+  "snow",
+  "shroomlight",
+
+  // Lãs coloridas
+  "white_wool",
+  "light_gray_wool",
+  "gray_wool",
+  "black_wool",
+  "red_wool",
+  "orange_wool",
+  "yellow_wool",
+  "lime_wool",
+  "green_wool",
+  "cyan_wool",
+  "light_blue_wool",
+  "blue_wool",
+  "purple_wool",
+  "magenta_wool",
+  "pink_wool",
+  "brown_wool",
 ];
 
 // Acesso helpers
 export const getLabel = (t: BlockType) => REGISTRY[t]?.label ?? t;
 export const getPreviewTexture = (t: BlockType) =>
   REGISTRY[t]?.preview() ?? loadPreviewTextureFromFolder(t);
+
+/**
+ * Sistema de auto-descoberta de blocos
+ * Analisa a pasta de texturas e sugere novos blocos que podem ser adicionados
+ */
+export function discoverNewBlocks(): string[] {
+  // Esta função seria chamada em desenvolvimento para descobrir novos blocos
+  // Por enquanto, retorna uma lista vazia, mas pode ser expandida para
+  // analisar dinamicamente a pasta de texturas
+  return [];
+}
+
+/**
+ * Verifica se um bloco tem texturas disponíveis
+ */
+export function hasTextures(blockType: string): boolean {
+  // Verifica se existe pelo menos uma textura para o bloco
+  const variants = ["all", "top", "side", "icon"];
+  return variants.some(_variant => {
+    // Esta lógica pode ser expandida para verificar arquivos reais
+    // Por enquanto, assume que se o bloco está no sistema, tem texturas
+    return blockType.length > 0;
+  });
+}
+
+/**
+ * Sistema automático de categorização baseado no nome do bloco
+ */
+export function autoDetectCategory(blockType: string): BlockDef["category"] {
+  if (blockType.includes("concrete")) return "concrete";
+  if (blockType.includes("glass")) return "glass";
+  if (blockType.includes("copper")) return "copper";
+  if (blockType.includes("tuff")) return "tuff";
+  if (blockType.includes("planks")) return "wood";
+  if (blockType.includes("log")) return "log";
+  if (blockType.includes("leaves")) return "leaves";
+  if (blockType.includes("brick")) return "brick";
+  if (blockType.includes("stone") || blockType.includes("slate")) return "stone";
+  return "misc";
+}
+
+/**
+ * Detecta automaticamente se um bloco é uma grade/barra
+ */
+export function autoDetectIsGrate(blockType: string): boolean {
+  return blockType.includes("_bars") || blockType.includes("_grate");
+}
+
+/**
+ * Detecta automaticamente se um bloco é vidro
+ */
+export function autoDetectIsGlass(blockType: string): boolean {
+  return blockType === "glass" || blockType.includes("_glass");
+}
+
+/**
+ * Detecta automaticamente se um bloco são folhas
+ */
+export function autoDetectIsLeaves(blockType: string): boolean {
+  return blockType.includes("leaves");
+}
 export const isLeavesType = (t: BlockType) =>
   !!(REGISTRY[t]?.isLeaves || REGISTRY[t]?.category === "leaves");
 export const getMaterialForFromRegistry = (

@@ -9,6 +9,7 @@ import { FileDown, FileUp, Layers, Info, Sun, Moon, Laptop2 } from "lucide-react
 import { exportWorldJSON, handleImportFile } from "../systems/world/serializer";
 import { useThemeContext } from "@/ui/theme/ThemeProvider";
 import { useWorld } from "@/state/world.store";
+import { CompactToolbar } from "@/components/CompactToolbar";
 import Logo from "../assets/mb_logo.png";
 
 export const TopBar: React.FC = () => {
@@ -26,20 +27,27 @@ export const TopBar: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-between text-sm border-b px-3 py-2">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <img src={Logo} alt="Logo" className="w-6 h-6" />
-          <span className="font-semibold">Mine Builder</span>
-          <span className="text-xs text-muted-foreground">v0.4.0</span>
+    <div className="flex items-center justify-between text-sm border-b px-4 py-3 bg-gradient-to-r from-background via-background/95 to-background">
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <img src={Logo} alt="Logo" className="w-7 h-7" />
+          <span className="font-bold text-base">Mine Builder</span>
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">v0.5.0</span>
         </div>
         
-        <div className="text-xs text-muted-foreground">
+        <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
           {blockCount} blocos
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Toolbar integrada no centro com destaque */}
+      <div className="flex-1 flex justify-center">
+        <div className="bg-card/80 backdrop-blur-sm border absolute top-0 border-border/50 rounded-xl px-4 py-6 shadow-lg z-1">
+          <CompactToolbar />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
         {/* Tema */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

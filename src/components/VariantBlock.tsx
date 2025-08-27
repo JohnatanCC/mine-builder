@@ -24,9 +24,9 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
   const visualGroupRef = React.useRef<THREE.Group>(null);
   const blocks = useWorld((state) => state.blocks); // Otimização: usar hook em vez de getState
 
-  // Calcular conexões para cercas e painéis
+  // Calcular conexões para cercas, painéis e grades
   const getConnections = () => {
-    if (!pos || (variant !== "fence" && variant !== "panel")) {
+    if (!pos || (variant !== "fence" && variant !== "panel" && variant !== "grate")) {
       return { north: false, south: false, east: false, west: false };
     }
 
@@ -295,6 +295,47 @@ export const VariantBlock: React.FC<VariantBlockProps> = ({
             {panelConnections.south && (
               <mesh castShadow receiveShadow position={[0, 0, 0.25]}>
                 <boxGeometry args={[0.125, 1, 0.5]} />
+                {renderMaterial(materials)}
+              </mesh>
+            )}
+          </group>
+        );
+
+      case "grate":
+        const grateConnections = getConnections();
+        return (
+          <group>
+            {/* Grade central - palito vertical inicial */}
+            <mesh castShadow receiveShadow position={[0, 0, 0]}>
+              <boxGeometry args={[0.0625, 1, 0.0625]} />
+              {renderMaterial(materials)}
+            </mesh>
+            
+            {/* Conexões laterais - cada grade renderiza meia-conexão até a borda */}
+            {grateConnections.east && (
+              <mesh castShadow receiveShadow position={[0.25, 0, 0]}>
+                <boxGeometry args={[0.5, 1, 0.0625]} />
+                {renderMaterial(materials)}
+              </mesh>
+            )}
+            
+            {grateConnections.west && (
+              <mesh castShadow receiveShadow position={[-0.25, 0, 0]}>
+                <boxGeometry args={[0.5, 1, 0.0625]} />
+                {renderMaterial(materials)}
+              </mesh>
+            )}
+            
+            {grateConnections.north && (
+              <mesh castShadow receiveShadow position={[0, 0, -0.25]}>
+                <boxGeometry args={[0.0625, 1, 0.5]} />
+                {renderMaterial(materials)}
+              </mesh>
+            )}
+            
+            {grateConnections.south && (
+              <mesh castShadow receiveShadow position={[0, 0, 0.25]}>
+                <boxGeometry args={[0.0625, 1, 0.5]} />
                 {renderMaterial(materials)}
               </mesh>
             )}

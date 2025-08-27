@@ -1,4 +1,3 @@
-// UPDATE: src/App.tsx
 import { Canvas } from "@react-three/fiber";
 import * as React from "react";
 
@@ -6,14 +5,16 @@ import { World } from "./components/World";
 import { Ground } from "./components/Ground";
 import { Highlight } from "./components/Highlight";
 import { Lights } from "./components/Lights";
+import { LinePreview } from "./components/LinePreview";
+import { CopyPreview } from "./components/CopyPreview";
 import FpsMeter from "./ui/FpsMeter";
 import { AppShell } from "./components/AppShell";
 import { TopBar } from "./ui/TopBar";
 import { Inspector } from "./ui/Inspector";
 import { CommandMenu } from "./ui/CommandMenu";
 import { BlockCatalog } from "./ui/BlockCatalog";
-import { ToolsRail } from "./ui/ToolsRail";
-import { SelectedBlock } from "./ui/SelectedBlock";
+import { Hotbar3D } from "./components/Hotbar3D";
+import { ToolHint } from "./components/ToolHint";
 import { AmbientAudio } from "./components/AmbientAudio";
 import { Keybinds } from "./components/Keybinds";
 import { CameraControls } from "./components/CameraControls";
@@ -46,12 +47,6 @@ export default function App() {
       topBar={<TopBar />}
       left={<BlockCatalog />}
       right={<Inspector />}
-      toolsOverlay={
-        <div className="flex flex-col gap-2">
-          <ToolsRail />
-          <SelectedBlock />
-        </div>
-      }
     >
       <div className="relative h-full w-full bg-transparent">
         <SkyBackdrop />
@@ -66,6 +61,8 @@ export default function App() {
 
           <CameraControls />
           <Highlight />
+          <LinePreview />
+          <CopyPreview />
           <Lights />
           <World />
           <Ground />
@@ -77,6 +74,8 @@ export default function App() {
       </div>
       <FpsMeter />
       <CommandMenu /> {/* Ctrl+K */}
+      <ToolHint />
+      <Hotbar3D />
       <AmbientAudio />
       <Keybinds />
       <LoadingOverlay />

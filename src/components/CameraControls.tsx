@@ -5,11 +5,10 @@ import { useWorld } from "@/state/world.store";
 import type { Mode } from "@/core/types";
 
 export const CameraControls: React.FC<OrbitControlsProps> = (props) => {
-  const isCtrlDown = useWorld((s) => s.isCtrlDown);
   const mode = useWorld((s) => s.mode as Mode);
 
-  // Travar câmera se estiver em brush fixo OU com Ctrl
-  const lockCamera = isCtrlDown || String(mode) === "brush";
+  // Travar câmera se estiver em brush fixo
+  const lockCamera = String(mode) === "brush";
 
   React.useEffect(() => {
     const prev = document.body.style.cursor;

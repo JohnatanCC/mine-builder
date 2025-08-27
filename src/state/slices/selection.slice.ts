@@ -2,12 +2,23 @@
 import type { StateCreator } from "zustand";
 import type { WorldState } from "../world.store";
 import type { Mode, BlockType, BlockVariant, BlockRotation } from "@/core/types";
+import { REGISTRY } from "@/core/blocks/registry";
 
 export const createSelectionSlice: StateCreator<WorldState, [], [], Partial<WorldState>> =
   (set) => ({
     // seus defaults reais aqui:
     current: "dirt" as BlockType,
-    setCurrent: (t) => set({ current: t }),
+    setCurrent: (t) => set(() => {
+      const blockDef = REGISTRY[t];
+      const updates: Partial<WorldState> = { current: t };
+      
+      // Automaticamente muda para variante "grate" se o bloco for marcado como grade
+      if (blockDef?.isGrate) {
+        updates.currentVariant = "grate";
+      }
+      
+      return updates;
+    }),
 
     // variante atual do bloco
     currentVariant: "block" as BlockVariant,

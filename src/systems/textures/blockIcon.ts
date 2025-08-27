@@ -4,7 +4,7 @@ import type { BlockType } from "@/core/types";
 
 const ICON_CACHE = new Map<string, string | undefined>();
 
-/** Prioridade de arquivo para ícone: side → all → top → icon */
+/** Prioridade de arquivo para ícone: side → all → top → top-bottom → side1 → icon */
 export function resolveBlockIconURL(type: BlockType, pack?: string): string | undefined {
   const key = `${pack ?? "legacy"}|${type}`;
   if (ICON_CACHE.has(key)) return ICON_CACHE.get(key)!;
@@ -13,6 +13,8 @@ export function resolveBlockIconURL(type: BlockType, pack?: string): string | un
     findBlockFileURL(type, "side", pack) ??
     findBlockFileURL(type, "all",  pack) ??
     findBlockFileURL(type, "top",  pack) ??
+    findBlockFileURL(type, "top-bottom" as any, pack) ??
+    findBlockFileURL(type, "side1" as any, pack) ??
     findBlockFileURL(type, "icon", pack);
 
   ICON_CACHE.set(key, url);
